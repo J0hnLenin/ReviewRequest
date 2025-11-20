@@ -47,8 +47,6 @@ func replaceReviewer(pr *domain.PullRequest, oldReviewer *domain.User, newReview
 	pr.Reviewers[ind] = newReviewer
 }
 
-
-
 func fillReviewers(pr *domain.PullRequest, t *domain.Team) {
 	for len(pr.Reviewers) < domain.MaxReviewers {
 		reviewer := newReviewer(t, pr)
