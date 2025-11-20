@@ -1,25 +1,28 @@
 package domain
 
 type User struct {
-	ID uint64
-	Name string
-	Team *Team 
+	ID       string
+	Name     string
+	TeamName string
 	IsActive bool
 }
 
 type Team struct {
-	ID uint64
-	Name string
+	Name    string
+	Members []*User
 }
 
 type PullRequest struct {
-	ID uint64
-	Title string
-	Author *User
-	Merged bool 
+	ID        string
+	Title     string
+	Author    *User
+	Reviewers []*User
+	Status    PRStatus
 }
 
-type Reviewer struct {
-	User *User
-	PR *PullRequest
-}
+type PRStatus bool
+
+const (
+	Merged = true
+	Open   = false
+)
