@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"math/rand"
 	"slices"
 
 	"github.com/J0hnLenin/ReviewRequest/domain"
@@ -30,39 +31,44 @@ func (s *Service) TeamSave(ctx context.Context, t *domain.Team) error {
 }
 
 func (s *Service) TeamGetByName(ctx context.Context, n string) (*domain.Team, error) {
-	t, err := s.teamRepo.GetByName(ctx, n)
+	team, err := s.teamRepo.GetByName(ctx, n)
 	if err != nil {
 		return nil, err
 	}
-	return t, nil
+	return team, nil
 }
 
 func (s *Service) UserChangeActive(ctx context.Context, id string, newValue bool) (*domain.User, error) {
-	u, err := s.userRepo.GetById(ctx, id)
+	user, err := s.userRepo.GetById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if u.IsActive == newValue{
-		return u, nil
+	if user.IsActive == newValue{
+		return user, nil
 	}
-	u.IsActive = newValue
-	err = s.userRepo.Save(ctx, u)
+	user.IsActive = newValue
+	err = s.userRepo.Save(ctx, user)
 	if err != nil {
 		return nil, err
 	}
-	return u, nil
+	return user, nil
 }
 
 func (s *Service) UserGetReviews(ctx context.Context, id string) ([]*domain.PullRequest, error) {
 	return s.prRepo.GetByAuthor(ctx, id)
 }
 
-func (s *Service) PRCreate(ctx context.Context, pr *domain.PullRequest) error {
-	_, err := s.prRepo.GetById(ctx, pr.ID)
-	if err == domain.ErrNotFound {
-		return s.prRepo.Save(ctx, pr)
+func (s *Service) PRCreate(ctx context.Context, id string) error {
+	pr, err := s.prRepo.GetById(ctx, id)
+	if err != domain.ErrNotFound {
+		return domain.ErrPRExists
 	}
-	return domain.ErrPRExists
+	team, err := s.teamRepo.GetByName(ctx, pr.Author.TeamName)
+	if err != nil {
+		return err
+	}
+	fillReviewers(pr, team)
+	return s.prRepo.Save(ctx, pr)
 }
 
 func (s *Service) PRMerge(ctx context.Context, id string) error {
@@ -92,11 +98,11 @@ func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string
 	if !slices.Contains(pr.Reviewers, reviewer) {
 		return domain.ErrNotAssigned
 	}
-	t, err := s.teamRepo.GetByName(ctx, pr.Author.TeamName)
+	team, err := s.teamRepo.GetByName(ctx, pr.Author.TeamName)
 	if err != nil {
 		return err
 	}
-	newReviewer := getRandomTeamMember(t, pr)
+	newReviewer := newReviewer(team, pr)
 	if newReviewer == nil {
 		return domain.ErrNoCandidate
 	}
@@ -104,16 +110,38 @@ func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string
 	return s.prRepo.Save(ctx, pr)
 }
 
-func getRandomTeamMember(t *domain.Team, pr *domain.PullRequest) *domain.User{
-	for _, u := range t.Members {
-		if !slices.Contains(pr.Reviewers, u) && pr.Author!=u {
-			return u
+func newReviewer(t *domain.Team, pr *domain.PullRequest) *domain.User{
+	candidates := make([]*domain.User, len(pr.Reviewers))
+	
+	for _, member := range t.Members {
+		if !slices.Contains(pr.Reviewers, member) && pr.Author != member {
+			candidates = append(candidates, member)
 		}
 	}
-	return nil
+	
+	if len(candidates) == 0 {
+		return nil
+	}
+	
+	ind := rand.Intn(len(candidates))
+	return candidates[ind]
 }
 
-func replaceReviewer(pr *domain.PullRequest, oldR *domain.User, newR *domain.User) {
-	ind := slices.Index(pr.Reviewers, oldR)
-	pr.Reviewers[ind] = newR
+func replaceReviewer(pr *domain.PullRequest, oldReviewer *domain.User, newReviewer *domain.User) {
+	ind := slices.Index(pr.Reviewers, oldReviewer)
+	pr.Reviewers[ind] = newReviewer
+} 
+
+func addReviewer(pr *domain.PullRequest, u *domain.User) {
+	pr.Reviewers = append(pr.Reviewers, u)
+}
+
+func fillReviewers(pr *domain.PullRequest, t *domain.Team) {
+	for range domain.MaxReviewers {
+		reviewer := newReviewer(t, pr)
+		if reviewer == nil {
+			break
+		}
+		addReviewer(pr, reviewer)
+	}
 }

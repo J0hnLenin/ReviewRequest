@@ -23,6 +23,10 @@ type PullRequest struct {
 type PRStatus bool
 
 const (
-	Merged = true
-	Open   = false
+	Merged PRStatus = true
+	Open   PRStatus = false
+)
+
+const (
+	MaxReviewers = 2
 )
