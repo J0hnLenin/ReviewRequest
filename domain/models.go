@@ -13,11 +13,11 @@ type Team struct {
 }
 
 type PullRequest struct {
-	ID        string
-	Title     string
-	Author    *User
-	Reviewers []*User
-	Status    PRStatus
+	ID          string
+	Title       string
+	AuthorID    string
+	ReviewersID []string
+	Status      PRStatus
 }
 
 type PRStatus bool

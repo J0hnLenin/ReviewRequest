@@ -7,16 +7,14 @@ import (
 	"github.com/J0hnLenin/ReviewRequest/domain"
 )
 
-func prContainsReviewer(pr *domain.PullRequest, u *domain.User) bool {
-	return slices.ContainsFunc(pr.Reviewers, func(r *domain.User) bool { 
-                return userEquals(r, u) 
-            })
+func prContainsReviewer(pr *domain.PullRequest, userID string) bool {
+	return slices.Contains(pr.ReviewersID,userID)
 }
 
 func validCandidate(pr *domain.PullRequest, u *domain.User) bool {
 	return u.IsActive &&
-		!prContainsReviewer(pr, u) &&
-		!userEquals(pr.Author, u)
+		!prContainsReviewer(pr, u.ID) &&
+		pr.AuthorID != u.ID
 }
 
 func newReviewer(t *domain.Team, pr *domain.PullRequest) *domain.User {
@@ -36,28 +34,26 @@ func newReviewer(t *domain.Team, pr *domain.PullRequest) *domain.User {
 	return candidates[ind]
 }
 
-func addReviewer(pr *domain.PullRequest, u *domain.User) {
-	pr.Reviewers = append(pr.Reviewers, u)
+func addReviewer(pr *domain.PullRequest, userID string) {
+	pr.ReviewersID = append(pr.ReviewersID, userID)
 }
 
-func replaceReviewer(pr *domain.PullRequest, oldReviewer *domain.User, newReviewer *domain.User) error {
-	ind := slices.IndexFunc(pr.Reviewers, func(r *domain.User) bool {
-		return userEquals(r, oldReviewer)
-	})
+func replaceReviewer(pr *domain.PullRequest, oldReviewerID string, newReviewerID string) error {
+	ind := slices.Index(pr.ReviewersID, oldReviewerID)
 	if ind == -1 {
 		return domain.ErrNotAssigned
 	}
-	pr.Reviewers[ind] = newReviewer
+	pr.ReviewersID[ind] = newReviewerID
 	return nil
 }
 
 func fillReviewers(pr *domain.PullRequest, t *domain.Team) {
-	for len(pr.Reviewers) < domain.MaxReviewers {
+	for len(pr.ReviewersID) < domain.MaxReviewers {
 		reviewer := newReviewer(t, pr)
 		if reviewer == nil {
 			break
 		}
-		addReviewer(pr, reviewer)
+		addReviewer(pr, reviewer.ID)
 	}
 }
 

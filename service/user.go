@@ -11,6 +11,9 @@ func (s *Service) UserChangeActive(ctx context.Context, id string, newValue bool
 	if err != nil {
 		return nil, err
 	}
+	if user == nil {
+		return nil, domain.ErrNotFound
+	}
 	if user.IsActive == newValue{
 		return user, nil
 	}
@@ -24,11 +27,4 @@ func (s *Service) UserChangeActive(ctx context.Context, id string, newValue bool
 
 func (s *Service) UserGetReviews(ctx context.Context, id string) ([]*domain.PullRequest, error) {
 	return s.prRepo.GetByAuthor(ctx, id)
-}
-
-func userEquals(u1, u2 *domain.User) bool {
-	if u1 == nil || u2 == nil {
-		return u1 == u2
-	}
-	return u1.ID == u2.ID
 }

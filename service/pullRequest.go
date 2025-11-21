@@ -7,22 +7,21 @@ import (
 )
 
 func (s *Service) PRCreate(ctx context.Context, prID string, title string, authorID string) (*domain.PullRequest, error) {
-	_, err := s.prRepo.GetById(ctx, prID)
-	if err != domain.ErrNotFound {
+	pr, team, err := s.prRepo.GetPRAndTeam(ctx, prID)
+	if err != nil {
+		return nil, err
+	}
+	if pr != nil {
 		return nil, domain.ErrPRExists
 	}
-	author, err := s.userRepo.GetById(ctx, authorID)
-	if err != nil {
-		return nil, err
+	if team == nil {
+		return nil, domain.ErrNotFound
 	}
-	team, err := s.teamRepo.GetByName(ctx, author.TeamName)
-	if err != nil {
-		return nil, err
-	}
-	pr := &domain.PullRequest{
+	
+	pr = &domain.PullRequest{
 		ID:     prID,
 		Title:  title,
-		Author: author,
+		AuthorID: authorID,
 		Status: domain.Open,
 	}
 	fillReviewers(pr, team)
@@ -38,6 +37,9 @@ func (s *Service) PRMerge(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	if pr == nil {
+		return domain.ErrNotFound
+	}
 	if pr.Status == domain.Merged {
 		return nil
 	}
@@ -46,29 +48,24 @@ func (s *Service) PRMerge(ctx context.Context, id string) error {
 }
 
 func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string) error {
-	pr, err := s.prRepo.GetById(ctx, prID)
+	pr, team, err := s.prRepo.GetPRAndTeam(ctx, prID)
 	if err != nil {
 		return err
+	}
+	if pr == nil || team == nil {
+		return domain.ErrNotFound
 	}
 	if pr.Status == domain.Merged {
 		return domain.ErrPRMerged
 	}
-	reviewer, err := s.userRepo.GetById(ctx, reviewerID)
-	if err != nil {
-		return err
-	}
-	if !prContainsReviewer(pr, reviewer) {
+	if !prContainsReviewer(pr, reviewerID) {
 		return domain.ErrNotAssigned
-	}
-	team, err := s.teamRepo.GetByName(ctx, pr.Author.TeamName)
-	if err != nil {
-		return err
 	}
 	newReviewer := newReviewer(team, pr)
 	if newReviewer == nil {
 		return domain.ErrNoCandidate
 	}
-	err = replaceReviewer(pr, reviewer, newReviewer)
+	err = replaceReviewer(pr, reviewerID, newReviewer.ID)
 	if err != nil {
 		return err
 	}

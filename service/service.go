@@ -19,6 +19,7 @@ type UserRepository interface {
 type PullRequestRepository interface {
 	GetByAuthor(ctx context.Context, id string) ([]*domain.PullRequest, error)
 	GetById(ctx context.Context, id string) (*domain.PullRequest, error)
+	GetPRAndTeam(ctx context.Context, id string) (*domain.PullRequest, *domain.Team, error)
 	Save(ctx context.Context, pr *domain.PullRequest) error
 }
 
