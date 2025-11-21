@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) UserChangeActive(ctx context.Context, id string, newValue bool) (*domain.User, error) {
-	user, err := s.userRepo.GetById(ctx, id)
+	user, err := s.userRepo.GetUserById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +18,7 @@ func (s *Service) UserChangeActive(ctx context.Context, id string, newValue bool
 		return user, nil
 	}
 	user.IsActive = newValue
-	err = s.userRepo.Save(ctx, user)
+	err = s.userRepo.SaveUser(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -26,5 +26,5 @@ func (s *Service) UserChangeActive(ctx context.Context, id string, newValue bool
 }
 
 func (s *Service) UserGetReviews(ctx context.Context, id string) ([]*domain.PullRequest, error) {
-	return s.prRepo.GetByAuthor(ctx, id)
+	return s.prRepo.GetPRByAuthor(ctx, id)
 }

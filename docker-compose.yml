@@ -1,4 +1,19 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: review_app
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/review_db?sslmode=disable
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+    
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -10,7 +25,7 @@ services:
     ports:
       - "5430:5432"
     volumes:
-      - ./repository/postgres/migrations:/docker-entrypoint-initdb.d
+      - ./internal/repository/postgres/migrations:/docker-entrypoint-initdb.d
     deploy:
       resources:
         limits:

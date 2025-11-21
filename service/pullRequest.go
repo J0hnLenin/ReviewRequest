@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/J0hnLenin/ReviewRequest/domain"
 )
@@ -19,55 +20,68 @@ func (s *Service) PRCreate(ctx context.Context, prID string, title string, autho
 	}
 	
 	pr = &domain.PullRequest{
-		ID:     prID,
-		Title:  title,
+		ID:       prID,
+		Title:    title,
 		AuthorID: authorID,
-		Status: domain.Open,
+		Status:   domain.Open,
+		MergedAt: nil,
 	}
 	fillReviewers(pr, team)
-	err = s.prRepo.Save(ctx, pr)
+	err = s.prRepo.SavePR(ctx, pr)
 	if err != nil {
 		return nil, err
 	}
 	return pr, nil
 }
 
-func (s *Service) PRMerge(ctx context.Context, id string) error {
-	pr, err := s.prRepo.GetById(ctx, id)
+func (s *Service) PRMerge(ctx context.Context, id string) (*domain.PullRequest, error) {
+	pr, err := s.prRepo.GetPRById(ctx, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if pr == nil {
-		return domain.ErrNotFound
+		return nil, domain.ErrNotFound
 	}
 	if pr.Status == domain.Merged {
-		return nil
+		return pr, nil
 	}
+	
+	now := time.Now()
 	pr.Status = domain.Merged
-	return s.prRepo.Save(ctx, pr)
+	pr.MergedAt = &now
+	
+	err = s.prRepo.SavePR(ctx, pr)
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
 }
 
-func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string) error {
+func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string) (*domain.PullRequest, string, error) {
 	pr, team, err := s.prRepo.GetPRAndTeam(ctx, prID)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 	if pr == nil || team == nil {
-		return domain.ErrNotFound
+		return nil, "", domain.ErrNotFound
 	}
 	if pr.Status == domain.Merged {
-		return domain.ErrPRMerged
+		return nil, "", domain.ErrPRMerged
 	}
 	if !prContainsReviewer(pr, reviewerID) {
-		return domain.ErrNotAssigned
+		return nil, "", domain.ErrNotAssigned
 	}
 	newReviewer := newReviewer(team, pr)
 	if newReviewer == nil {
-		return domain.ErrNoCandidate
+		return nil, "", domain.ErrNoCandidate
 	}
 	err = replaceReviewer(pr, reviewerID, newReviewer.ID)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
-	return s.prRepo.Save(ctx, pr)
+	err = s.prRepo.SavePR(ctx, pr)
+	if err != nil {
+		return nil, "", err
+	}
+	return pr, newReviewer.ID, err
 }

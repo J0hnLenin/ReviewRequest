@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type User struct {
 	ID       string
 	Name     string
@@ -18,6 +20,7 @@ type PullRequest struct {
 	AuthorID    string
 	ReviewersID []string
 	Status      PRStatus
+	MergedAt    *time.Time
 }
 
 type PRStatus bool

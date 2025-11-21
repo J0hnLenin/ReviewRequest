@@ -24,6 +24,7 @@ CREATE TABLE pull_requests (
     author_id VARCHAR(255) NOT NULL REFERENCES users(id),
     reviewers_id VARCHAR(255)[] NOT NULL DEFAULT '{}',
     is_merged BOOLEAN NOT NULL DEFAULT false
+    merged_at TIMESTAMP WITH TIME ZONE NULL
 );
 
 CREATE INDEX idx_users_team_name ON users(team_name);

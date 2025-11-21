@@ -7,20 +7,20 @@ import (
 )
 
 type TeamRepository interface {
-	GetByName(ctx context.Context, name string) (*domain.Team, error)
-	Save(ctx context.Context, t *domain.Team) error
+	GetTeamByName(ctx context.Context, name string) (*domain.Team, error)
+	SaveTeam(ctx context.Context, t *domain.Team) error
 }
 
 type UserRepository interface {
-	GetById(ctx context.Context, id string) (*domain.User, error)
-	Save(ctx context.Context, u *domain.User) error
+	GetUserById(ctx context.Context, id string) (*domain.User, error)
+	SaveUser(ctx context.Context, u *domain.User) error
 }
 
 type PullRequestRepository interface {
-	GetByAuthor(ctx context.Context, id string) ([]*domain.PullRequest, error)
-	GetById(ctx context.Context, id string) (*domain.PullRequest, error)
+	GetPRByAuthor(ctx context.Context, id string) ([]*domain.PullRequest, error)
+	GetPRById(ctx context.Context, id string) (*domain.PullRequest, error)
 	GetPRAndTeam(ctx context.Context, id string) (*domain.PullRequest, *domain.Team, error)
-	Save(ctx context.Context, pr *domain.PullRequest) error
+	SavePR(ctx context.Context, pr *domain.PullRequest) error
 }
 
 type Service struct {
