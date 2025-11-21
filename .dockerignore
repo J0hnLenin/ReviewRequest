@@ -1,0 +1,10 @@
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+*.test
+coverage.*
+.vscode/
+go.work
+go.work.sum
