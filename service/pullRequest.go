@@ -68,6 +68,9 @@ func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string
 	if newReviewer == nil {
 		return domain.ErrNoCandidate
 	}
-	replaceReviewer(pr, reviewer, newReviewer)
+	err = replaceReviewer(pr, reviewer, newReviewer)
+	if err != nil {
+		return err
+	}
 	return s.prRepo.Save(ctx, pr)
 }

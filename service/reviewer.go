@@ -20,7 +20,7 @@ func validCandidate(pr *domain.PullRequest, u *domain.User) bool {
 }
 
 func newReviewer(t *domain.Team, pr *domain.PullRequest) *domain.User {
-	candidates := make([]*domain.User, 0, len(pr.Reviewers))
+	candidates := make([]*domain.User, 0, len(t.Members))
 
 	for _, member := range t.Members {
 		if validCandidate(pr, member) {
@@ -40,11 +40,15 @@ func addReviewer(pr *domain.PullRequest, u *domain.User) {
 	pr.Reviewers = append(pr.Reviewers, u)
 }
 
-func replaceReviewer(pr *domain.PullRequest, oldReviewer *domain.User, newReviewer *domain.User) {
+func replaceReviewer(pr *domain.PullRequest, oldReviewer *domain.User, newReviewer *domain.User) error {
 	ind := slices.IndexFunc(pr.Reviewers, func(r *domain.User) bool {
 		return userEquals(r, oldReviewer)
 	})
+	if ind == -1 {
+		return domain.ErrNotAssigned
+	}
 	pr.Reviewers[ind] = newReviewer
+	return nil
 }
 
 func fillReviewers(pr *domain.PullRequest, t *domain.Team) {
