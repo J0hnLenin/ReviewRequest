@@ -17,6 +17,9 @@ func (r *PostgresRepository) GetPRByAuthor(ctx context.Context, authorID string)
 		WHERE author_id = $1`
 
 	rows, err := r.db.QueryContext(ctx, query, authorID)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, service.ErrQueryExecution
 	}
@@ -41,7 +44,11 @@ func (r *PostgresRepository) GetPRById(ctx context.Context, id string) (*domain.
 		WHERE id = $1`
 
 	row := r.db.QueryRowContext(ctx, query, id)
-	return r.scanPullRequest(row)
+	pr, err := r.scanPullRequest(row)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return pr, err
 }
 
 func (r *PostgresRepository) GetPRAndTeam(ctx context.Context, id string) (*domain.PullRequest, *domain.Team, error) {
@@ -54,9 +61,9 @@ func (r *PostgresRepository) GetPRAndTeam(ctx context.Context, id string) (*doma
 			pr.is_merged,
 			pr.merged_at,
 			t.team_name,
-			COALESCE(array_agg(DISTINCT um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_ids,
-			COALESCE(array_agg(DISTINCT um.user_name) FILTER (WHERE um.id IS NOT NULL), '{}') as member_names,
-			COALESCE(array_agg(DISTINCT um.is_active) FILTER (WHERE um.id IS NOT NULL), '{}') as member_active,
+			COALESCE(array_agg(um.id ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_ids,
+			COALESCE(array_agg(um.user_name ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_names,
+			COALESCE(array_agg(um.is_active ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_active,
 			u.user_name as author_name,
 			u.team_name as author_team_name,
 			u.is_active as author_active

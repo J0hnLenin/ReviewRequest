@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-    connStr := "postgres://postgres:postgres@localhost:5430/review_db?sslmode=disable"
-    if fromEnv := os.Getenv("DATABASE_URL"); fromEnv != "" {
-        connStr = fromEnv
+    connStr := os.Getenv("DATABASE_URL");
+    if connStr == "" {
+        panic("Connection string empty")
     }
 
     repo, err := postgres.NewPostgresRepository(connStr)

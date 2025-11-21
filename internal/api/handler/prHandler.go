@@ -116,8 +116,6 @@ func (h *Handler) convertPRToResponse(pr *domain.PullRequest) map[string]interfa
 
 	if pr.Status == domain.Merged && pr.MergedAt != nil {
 		response["mergedAt"] = pr.MergedAt.Format(time.RFC3339)
-	} else {
-		response["mergedAt"] = nil
 	}
 	
 	return response

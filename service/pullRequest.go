@@ -8,12 +8,17 @@ import (
 )
 
 func (s *Service) PRCreate(ctx context.Context, prID string, title string, authorID string) (*domain.PullRequest, error) {
-	pr, team, err := s.prRepo.GetPRAndTeam(ctx, prID)
+	pr, err := s.prRepo.GetPRById(ctx, prID)
 	if err != nil {
 		return nil, err
 	}
 	if pr != nil {
 		return nil, domain.ErrPRExists
+	}
+
+	team, err := s.teamRepo.GetTeamByUser(ctx, authorID)
+	if err != nil {
+		return nil, err
 	}
 	if team == nil {
 		return nil, domain.ErrNotFound

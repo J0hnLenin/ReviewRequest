@@ -8,6 +8,7 @@ import (
 
 type TeamRepository interface {
 	GetTeamByName(ctx context.Context, name string) (*domain.Team, error)
+	GetTeamByUser(ctx context.Context, userID string) (*domain.Team, error)
 	SaveTeam(ctx context.Context, t *domain.Team) error
 }
 

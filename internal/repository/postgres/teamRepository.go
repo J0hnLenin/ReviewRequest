@@ -12,9 +12,9 @@ import (
 func (r *PostgresRepository) GetTeamByName(ctx context.Context, name string) (*domain.Team, error) {
 	query := `
 		SELECT t.team_name, 
-		       COALESCE(array_agg(u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_ids,
-		       COALESCE(array_agg(u.user_name) FILTER (WHERE u.id IS NOT NULL), '{}') as member_names,
-		       COALESCE(array_agg(u.is_active) FILTER (WHERE u.id IS NOT NULL), '{}') as member_active
+		       COALESCE(array_agg(u.id ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_ids,
+		       COALESCE(array_agg(u.user_name ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_names,
+		       COALESCE(array_agg(u.is_active ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_active
 		FROM teams t
 		LEFT JOIN users u ON t.team_name = u.team_name
 		WHERE t.team_name = $1
@@ -25,6 +25,49 @@ func (r *PostgresRepository) GetTeamByName(ctx context.Context, name string) (*d
 	var memberActive []bool
 
 	err := r.db.QueryRowContext(ctx, query, name).Scan(
+		&team.Name,
+		pq.Array(&memberIDs),
+		pq.Array(&memberNames),
+		pq.Array(&memberActive),
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, service.ErrQueryExecution
+	}
+
+	team.Members = make([]*domain.User, len(memberIDs))
+	for i := range memberIDs {
+		team.Members[i] = &domain.User{
+			ID:       memberIDs[i],
+			Name:     memberNames[i],
+			TeamName: team.Name,
+			IsActive: memberActive[i],
+		}
+	}
+
+	return &team, nil
+}
+
+func (r *PostgresRepository) GetTeamByUser(ctx context.Context, userID string) (*domain.Team, error) {
+	query := `
+		SELECT 
+			t.team_name,
+			COALESCE(array_agg(um.id ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_ids,
+			COALESCE(array_agg(um.user_name ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_names,
+			COALESCE(array_agg(um.is_active ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_active
+		FROM teams t
+		INNER JOIN users u ON u.team_name = t.team_name AND u.id = $1
+		LEFT JOIN users um ON t.team_name = um.team_name
+		GROUP BY t.team_name`
+
+	var team domain.Team
+	var memberIDs, memberNames []string
+	var memberActive []bool
+
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&team.Name,
 		pq.Array(&memberIDs),
 		pq.Array(&memberNames),
