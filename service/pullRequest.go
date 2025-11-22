@@ -29,6 +29,7 @@ func (s *Service) PRCreate(ctx context.Context, prID string, title string, autho
 		Title:    title,
 		AuthorID: authorID,
 		Status:   domain.Open,
+		ReviewersID: make([]string, 0, 2),
 		MergedAt: nil,
 	}
 	fillReviewers(pr, team)

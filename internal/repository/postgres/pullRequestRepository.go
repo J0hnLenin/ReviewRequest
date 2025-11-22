@@ -63,21 +63,17 @@ func (r *PostgresRepository) GetPRAndTeam(ctx context.Context, id string) (*doma
 			t.team_name,
 			COALESCE(array_agg(um.id ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_ids,
 			COALESCE(array_agg(um.user_name ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_names,
-			COALESCE(array_agg(um.is_active ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_active,
-			u.user_name as author_name,
-			u.team_name as author_team_name,
-			u.is_active as author_active
+			COALESCE(array_agg(um.is_active ORDER BY um.id) FILTER (WHERE um.id IS NOT NULL), '{}') as member_active
 			
 		FROM pull_requests pr
-		LEFT JOIN users u ON pr.author_id = u.id
-		LEFT JOIN teams t ON u.team_name = t.team_name
+		INNER JOIN users u ON pr.author_id = u.id
+		INNER JOIN teams t ON u.team_name = t.team_name
 		LEFT JOIN users um ON t.team_name = um.team_name
 		
 		WHERE pr.id = $1
 		GROUP BY 
 			pr.id, pr.title, pr.author_id, pr.reviewers_id, pr.is_merged, pr.merged_at,
-			t.team_name,
-			u.user_name, u.team_name, u.is_active`
+			t.team_name`
 
 	var (
 		prID, prTitle, authorID string
@@ -89,9 +85,6 @@ func (r *PostgresRepository) GetPRAndTeam(ctx context.Context, id string) (*doma
 		
 		memberIDs, memberNames []string
 		memberActive           []bool
-		
-		authorName, authorTeamName string
-		authorActive               bool
 	)
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -107,10 +100,6 @@ func (r *PostgresRepository) GetPRAndTeam(ctx context.Context, id string) (*doma
 		pq.Array(&memberIDs),
 		pq.Array(&memberNames),
 		pq.Array(&memberActive),
-		
-		&authorName,
-		&authorTeamName,
-		&authorActive,
 	)
 
 	if err == sql.ErrNoRows {

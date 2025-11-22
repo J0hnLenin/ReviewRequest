@@ -1,0 +1,2240 @@
+{
+	"info": {
+		"_postman_id": "a49e5651-1fa3-408b-8cfc-3aa9aec475e3",
+		"name": "Review Request",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26932306"
+	},
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response body contains status: healthy\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"status\", \"healthy\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/health",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Team",
+			"item": [
+				{
+					"name": "New team",
+					"item": [
+						{
+							"name": "New team",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const team = randomString(20);\r",
+											"const u1 = randomString(20);\r",
+											"const u2 = randomString(20);\r",
+											"pm.environment.set(\"random_team\", team);\r",
+											"pm.environment.set(\"u1\", u1);\r",
+											"pm.environment.set(\"u2\", u2);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Test 1: Status code is 201",
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"// Parse response JSON",
+											"let jsonData;",
+											"try {",
+											"    jsonData = pm.response.json();",
+											"} catch (e) {",
+											"    pm.test(\"Response body is valid JSON\", function () {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    });",
+											"}",
+											"",
+											"// Response body contains 'team' object",
+											"pm.test(\"Response body contains 'team' object\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"team\");",
+											"    pm.expect(jsonData.team).to.be.an(\"object\");",
+											"});",
+											"",
+											"// 'team_name' matches environment variable 'random_team'",
+											"pm.test(\"team_name matches environment variable\", function () {",
+											"    const expectedTeamName = pm.environment.get(\"random_team\");",
+											"    pm.expect(jsonData.team).to.have.property(\"team_name\", expectedTeamName);",
+											"});",
+											"",
+											"// 'members' array contains two objects with correct properties and values",
+											"pm.test(\"members array contains two correct objects\", function () {",
+											"    pm.expect(jsonData.team).to.have.property(\"members\");",
+											"    pm.expect(jsonData.team.members).to.be.an(\"array\").with.lengthOf(2);",
+											"    const members = jsonData.team.members;",
+											"    const expectedMembers = [",
+											"        {",
+											"            user_id: pm.environment.get(\"u1\"),",
+											"            username: \"Alice\",",
+											"            is_active: true",
+											"        },",
+											"        {",
+											"            user_id: pm.environment.get(\"u2\"),",
+											"            username: \"Bob\",",
+											"            is_active: true",
+											"        }",
+											"    ];",
+											"    expectedMembers.forEach(expected => {",
+											"        const found = members.find(m => m.user_id === expected.user_id && m.username === expected.username && m.is_active === expected.is_active);",
+											"        pm.expect(found, `Member with user_id ${expected.user_id}, username ${expected.username}, is_active ${expected.is_active} not found`).to.exist;",
+											"    });",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"team_name\": \"{{random_team}}\",\r\n  \"members\": [\r\n    {\r\n      \"user_id\": \"{{u1}}\",\r\n      \"username\": \"Alice\",\r\n      \"is_active\": true\r\n    },\r\n    {\r\n      \"user_id\": \"{{u2}}\",\r\n      \"username\": \"Bob\",\r\n      \"is_active\": true\r\n    }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/team/add",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"team",
+										"add"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New team already exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const body = {\r",
+											"    \"team_name\": \"payments\",\r",
+											"    \"members\": [\r",
+											"        { \"user_id\": \"u1\", \"username\": \"Alice\", \"is_active\": true },\r",
+											"        { \"user_id\": \"u2\", \"username\": \"Bob\", \"is_active\": true }\r",
+											"    ]\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Response body contains expected error object\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('error');",
+											"    pm.expect(jsonData.error).to.have.property('code', 'TEAM_EXISTS');",
+											"    pm.expect(jsonData.error).to.have.property('message', 'team_name already exists');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"team_name\": \"payments\",\r\n  \"members\": [\r\n    {\r\n      \"user_id\": \"u1\",\r\n      \"username\": \"Alice\",\r\n      \"is_active\": true\r\n    },\r\n    {\r\n      \"user_id\": \"u2\",\r\n      \"username\": \"Bob\",\r\n      \"is_active\": true\r\n    }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/team/add",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"team",
+										"add"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get team",
+					"item": [
+						{
+							"name": "Get team",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const team = randomString(20);\r",
+											"const m1 = randomString(20);\r",
+											"const m2 = randomString(20);\r",
+											"pm.environment.set(\"random_team\", team);\r",
+											"pm.environment.set(\"u1\", m1);\r",
+											"pm.environment.set(\"u2\", m2);\r",
+											"\r",
+											"\r",
+											"const body = {\r",
+											"  \"team_name\": pm.environment.get(\"random_team\"),\r",
+											"  \"members\": [\r",
+											"    {\r",
+											"      \"user_id\": pm.environment.get(\"u1\"),\r",
+											"      \"username\": \"Member1\",\r",
+											"      \"is_active\": true\r",
+											"    },\r",
+											"    {\r",
+											"      \"user_id\": pm.environment.get(\"u2\"),\r",
+											"      \"username\": \"Member2\",\r",
+											"      \"is_active\": false\r",
+											"    }\r",
+											"  ]\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 200",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"let jsonData;",
+											"try {",
+											"    jsonData = pm.response.json();",
+											"} catch (e) {",
+											"    pm.test(\"Response body is valid JSON\", function () {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    });",
+											"}",
+											"",
+											"// Response body contains 'members' array and 'team_name'",
+											"pm.test(\"Response body contains 'members' array and 'team_name'\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"members\");",
+											"    pm.expect(jsonData).to.have.property(\"team_name\");",
+											"});",
+											"",
+											"// 'team_name' matches environment variable 'random_team'",
+											"pm.test(\"team_name matches environment variable\", function () {",
+											"    const expectedTeamName = pm.environment.get(\"random_team\");",
+											"    pm.expect(jsonData.team_name).to.equal(expectedTeamName);",
+											"});",
+											"",
+											"// 'members' array contains correct objects with properties and values",
+											"pm.test(\"members array contains correct objects\", function () {",
+											"    pm.expect(jsonData.members).to.be.an(\"array\");",
+											"    const expectedMembers = [",
+											"        {",
+											"            user_id: pm.environment.get(\"u1\"),",
+											"            username: \"Member1\",",
+											"            is_active: true",
+											"        },",
+											"        {",
+											"            user_id: pm.environment.get(\"u2\"),",
+											"            username: \"Member2\",",
+											"            is_active: false",
+											"        }",
+											"    ];",
+											"",
+											"    expectedMembers.forEach(expected => {",
+											"        const found = jsonData.members.find(m => m.user_id === expected.user_id && m.username === expected.username && m.is_active === expected.is_active);",
+											"        pm.expect(found, `Member with user_id ${expected.user_id}, username ${expected.username}, is_active ${expected.is_active} not found`).to.exist;",
+											"    });",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/team/get?team_name={{random_team}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"team",
+										"get"
+									],
+									"query": [
+										{
+											"key": "team_name",
+											"value": "{{random_team}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get team not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const team = randomString(20);\r",
+											"pm.environment.set(\"not_exists_team\", team);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 404",
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/team/get?team_name={{not_exists_team}}",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"team",
+										"get"
+									],
+									"query": [
+										{
+											"key": "team_name",
+											"value": "{{not_exists_team}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "isActive change",
+					"item": [
+						{
+							"name": "Change user active",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 200",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// Parse response JSON",
+											"let jsonData;",
+											"try {",
+											"    jsonData = pm.response.json();",
+											"} catch (e) {",
+											"    pm.test(\"Response body is valid JSON\", function () {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    });",
+											"}",
+											"",
+											"// Response body contains 'user' object",
+											"pm.test(\"Response body contains 'user' object\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"user\");",
+											"    pm.expect(jsonData.user).to.be.an(\"object\");",
+											"});",
+											"",
+											"// 'team_name' matches environment variable 'random_team'",
+											"pm.test(\"user.team_name matches environment variable\", function () {",
+											"    const expectedTeamName = pm.environment.get(\"random_team\");",
+											"    pm.expect(jsonData.user).to.have.property(\"team_name\", expectedTeamName);",
+											"});",
+											"",
+											"// 'user_id' matches environment variable 'u1'",
+											"pm.test(\"user.user_id matches environment variable u1\", function () {",
+											"    const expectedUserId = pm.environment.get(\"u1\");",
+											"    pm.expect(jsonData.user).to.have.property(\"user_id\", expectedUserId);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"user_id\": \"{{u1}}\",\r\n  \"is_active\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/setIsActive",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"setIsActive"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change user not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const random_string = randomString(20);\r",
+											"pm.environment.set(\"random_string\", random_string);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 404",
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"user_id\": \"{{random_string}}\",\r\n  \"is_active\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/setIsActive",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"setIsActive"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "PR",
+			"item": [
+				{
+					"name": "New PR",
+					"item": [
+						{
+							"name": "New PR",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const pr_id = randomString(20);\r",
+											"const pr_name = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"pr_id\", pr_id);\r",
+											"pm.environment.set(\"pr_name\", pr_name);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"// Validate the response status code is 201 Created.\r",
+											"pm.test(\"Status code is 201\", function () {\r",
+											"    pm.response.to.have.status(201);\r",
+											"});\r",
+											"\r",
+											"// Test the response body structure and values\r",
+											"pm.test(\"Response body structure is valid\", function () {\r",
+											"    pm.expect(responseJSON).to.have.property('pr');\r",
+											"});\r",
+											"\r",
+											"// Test for required fields in the pr object\r",
+											"pm.test(\"PR object contains the required fields\", function () {\r",
+											"    pm.expect(responseJSON.pr).to.have.all.keys('assigned_reviewers', 'author_id', 'pull_request_id', 'pull_request_name', 'status');\r",
+											"});\r",
+											"\r",
+											"// Validate pr status is 'OPEN'\r",
+											"pm.test(\"Status is 'OPEN'\", function () {\r",
+											"    pm.expect(responseJSON.pr.status).to.equal('OPEN');\r",
+											"});\r",
+											"\r",
+											"// Validate that pr name is same as env variable pr_name\r",
+											"pm.test(\"Check pr_name is env pr_name\", function () {\r",
+											"    const expected = pm.environment.get(\"pr_name\");\r",
+											"    pm.expect(responseJSON.pr.pull_request_name).to.equal(expected);\r",
+											"});\r",
+											"\r",
+											"// Validate that pr id is same as env variable pr_id\r",
+											"pm.test(\"Check pr_id is env pr_id\", function () {\r",
+											"    const expected = pm.environment.get(\"pr_id\");\r",
+											"    pm.expect(responseJSON.pr.pull_request_id).to.equal(expected);\r",
+											"});\r",
+											"\r",
+											"// Validate that author user id is same as env variable u1\r",
+											"pm.test(\"Check author_id is env u1\", function () {\r",
+											"    const expected = pm.environment.get(\"u1\");\r",
+											"    pm.expect(responseJSON.pr.author_id).to.equal(expected);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"pull_request_name\": \"{{pr_name}}\",\r\n  \"author_id\": \"{{u1}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/create",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New PR already exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const pr_id = randomString(20);\r",
+											"const pr_name = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"pr_id\", pr_id);\r",
+											"pm.environment.set(\"pr_name\", pr_name);\r",
+											"\r",
+											"const body = {\r",
+											"    \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"    \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"    \"author_id\": pm.environment.get(\"u1\"),\r",
+											"\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();\r",
+											"\r",
+											"pm.test(\"Status code is 409\", function () {\r",
+											"    pm.expect(pm.response.code).to.equal(409);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Error response structure is valid\", function () {\r",
+											"    pm.expect(response.error).to.exist;\r",
+											"    pm.expect(response.error).to.have.property('code');\r",
+											"    pm.expect(response.error).to.have.property('message');\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Error code is 'PR_EXISTS'\", function () {\r",
+											"    pm.expect(response.error.code).to.equal('PR_EXISTS');\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Error message is 'PR id already exists'\", function () {\r",
+											"    pm.expect(response.error.message).to.equal('PR id already exists');\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"pull_request_name\": \"{{pr_name}}\",\r\n  \"author_id\": \"{{u1}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/create",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New PR author not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const pr_id = randomString(20);\r",
+											"const pr_name = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"pr_id\", pr_id);\r",
+											"pm.environment.set(\"pr_name\", pr_name);\r",
+											"\r",
+											"const body = {\r",
+											"    \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"    \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"    \"author_id\": pm.environment.get(\"u1\"),\r",
+											"\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 404\r",
+											"pm.test(\"Status code is 404\", function () {\r",
+											"    pm.response.to.have.status(404);\r",
+											"});\r",
+											"\r",
+											"// Response body contains 'error' object with correct code and message\r",
+											"pm.test(\"Response body contains correct 'error' object\", function () {\r",
+											"    let jsonData;\r",
+											"    try {\r",
+											"        jsonData = pm.response.json();\r",
+											"    } catch (e) {\r",
+											"        pm.expect.fail(\"Response body is not valid JSON\");\r",
+											"    }\r",
+											"    pm.expect(jsonData).to.have.property(\"error\");\r",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");\r",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{random_string}}\",\r\n  \"pull_request_name\": \"{{random_string}}\",\r\n  \"author_id\": \"{{random_string}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/create",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"create"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PR Merge",
+					"item": [
+						{
+							"name": "PR merge",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const pr_id = randomString(20);\r",
+											"const pr_name = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"pr_id\", pr_id);\r",
+											"pm.environment.set(\"pr_name\", pr_name);\r",
+											"\r",
+											"const body = {\r",
+											"    \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"    \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"    \"author_id\": pm.environment.get(\"u1\"),\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"// Test the response body structure and values\r",
+											"pm.test(\"Response body structure is valid\", function () {\r",
+											"    pm.expect(responseJSON).to.have.property('pr');\r",
+											"});\r",
+											"\r",
+											"// Test for required fields in the pr object\r",
+											"pm.test(\"PR object contains the required fields\", function () {\r",
+											"    pm.expect(responseJSON.pr).to.have.all.keys('assigned_reviewers', 'author_id', 'pull_request_id', 'pull_request_name', 'status', 'mergedAt');\r",
+											"});\r",
+											"\r",
+											"// Validate pr status is 'MERGED'\r",
+											"pm.test(\"Status is 'MERGED'\", function () {\r",
+											"    pm.expect(responseJSON.pr.status).to.equal('MERGED');\r",
+											"});\r",
+											"\r",
+											"// Validate that pr name is same as env variable pr_name\r",
+											"pm.test(\"Check pr_name is env pr_name\", function () {\r",
+											"    const expected = pm.environment.get(\"pr_name\");\r",
+											"    pm.expect(responseJSON.pr.pull_request_name).to.equal(expected);\r",
+											"});\r",
+											"\r",
+											"// Validate that pr id is same as env variable pr_id\r",
+											"pm.test(\"Check pr_id is env pr_id\", function () {\r",
+											"    const expected = pm.environment.get(\"pr_id\");\r",
+											"    pm.expect(responseJSON.pr.pull_request_id).to.equal(expected);\r",
+											"});\r",
+											"\r",
+											"// Validate that author user id is same as env variable u1\r",
+											"pm.test(\"Check author_id is env u1\", function () {\r",
+											"    const expected = pm.environment.get(\"u1\");\r",
+											"    pm.expect(responseJSON.pr.author_id).to.equal(expected);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/merge",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"merge"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR already merged",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const pr_id = randomString(20);\r",
+											"const pr_name = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"pr_id\", pr_id);\r",
+											"pm.environment.set(\"pr_name\", pr_name);\r",
+											"\r",
+											"var body = {\r",
+											"    \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"    \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"    \"author_id\": pm.environment.get(\"u1\"),\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});\r",
+											"\r",
+											"body = {\r",
+											"    \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/pullRequest/merge\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"var responseJSON = pm.response.json();\r",
+											"\r",
+											"// Test the response body structure and values\r",
+											"pm.test(\"Response body structure is valid\", function () {\r",
+											"    pm.expect(responseJSON).to.have.property('pr');\r",
+											"});\r",
+											"\r",
+											"// Test for required fields in the pr object\r",
+											"pm.test(\"PR object contains the required fields\", function () {\r",
+											"    pm.expect(responseJSON.pr).to.have.all.keys('assigned_reviewers', 'author_id', 'pull_request_id', 'pull_request_name', 'status', 'mergedAt');\r",
+											"});\r",
+											"\r",
+											"// Validate pr status is 'MERGED'\r",
+											"pm.test(\"Status is 'MERGED'\", function () {\r",
+											"    pm.expect(responseJSON.pr.status).to.equal('MERGED');\r",
+											"});\r",
+											"\r",
+											"// Validate that pr name is same as env variable pr_name\r",
+											"pm.test(\"Check pr_name is env pr_name\", function () {\r",
+											"    const expected = pm.environment.get(\"pr_name\");\r",
+											"    pm.expect(responseJSON.pr.pull_request_name).to.equal(expected);\r",
+											"});\r",
+											"\r",
+											"// Validate that pr id is same as env variable pr_id\r",
+											"pm.test(\"Check pr_id is env pr_id\", function () {\r",
+											"    const expected = pm.environment.get(\"pr_id\");\r",
+											"    pm.expect(responseJSON.pr.pull_request_id).to.equal(expected);\r",
+											"});\r",
+											"\r",
+											"// Validate that author user id is same as env variable u1\r",
+											"pm.test(\"Check author_id is env u1\", function () {\r",
+											"    const expected = pm.environment.get(\"u1\");\r",
+											"    pm.expect(responseJSON.pr.author_id).to.equal(expected);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/merge",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"merge"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR merge not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const random_string = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"random_string\", random_string);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 404\r",
+											"pm.test(\"Status code is 404\", function () {\r",
+											"    pm.response.to.have.status(404);\r",
+											"});\r",
+											"\r",
+											"// Response body contains 'error' object with correct code and message\r",
+											"pm.test(\"Response body contains correct 'error' object\", function () {\r",
+											"    let jsonData;\r",
+											"    try {\r",
+											"        jsonData = pm.response.json();\r",
+											"    } catch (e) {\r",
+											"        pm.expect.fail(\"Response body is not valid JSON\");\r",
+											"    }\r",
+											"    pm.expect(jsonData).to.have.property(\"error\");\r",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");\r",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{random_string}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/merge",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"merge"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PR reassign",
+					"item": [
+						{
+							"name": "PR reassign",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"timeout = 0;\r",
+											"\r",
+											"pm.environment.set(\"team_name\", randomString(20));\r",
+											"pm.environment.set(\"pr_id\", randomString(20));\r",
+											"pm.environment.set(\"pr_name\", randomString(20));\r",
+											"pm.environment.set(\"author_id\", randomString(20));\r",
+											"pm.environment.set(\"author_name\", randomString(20));\r",
+											"pm.environment.set(\"member1_id\", randomString(20));\r",
+											"pm.environment.set(\"member1_name\", randomString(20));\r",
+											"pm.environment.set(\"member2_id\", randomString(20));\r",
+											"pm.environment.set(\"member2_name\", randomString(20));\r",
+											"pm.environment.set(\"member3_id\", randomString(20));\r",
+											"pm.environment.set(\"member3_name\", randomString(20));\r",
+											"\r",
+											"function createTeam() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"team_name\": pm.environment.get(\"team_name\"),\r",
+											"            \"members\": [\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"author_id\"),\r",
+											"                \"username\": pm.environment.get(\"author_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member1_id\"),\r",
+											"                \"username\": pm.environment.get(\"member1_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member2_id\"),\r",
+											"                \"username\": pm.environment.get(\"member2_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member3_id\"),\r",
+											"                \"username\": pm.environment.get(\"member3_name\"),\r",
+											"                \"is_active\": true\r",
+											"            }\r",
+											"        ]\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"Team creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"Team created successfully\");\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"Team creation failed:\", response.body);\r",
+											"                reject(new Error(\"Team creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"function createPR() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"            \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"            \"author_id\": pm.environment.get(\"author_id\")\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"PR creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"PR created successfully:\");\r",
+											"                const r = response.json();\r",
+											"                const rev = r.pr.assigned_reviewers;\r",
+											"                pm.environment.set(\"reviewer1_id\", rev[0]);\r",
+											"                pm.environment.set(\"reviewer2_id\", rev[1]);\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"PR creation failed\");\r",
+											"                reject(new Error(\"PR creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"createTeam()\r",
+											"    .then(() => createPR())\r",
+											"    .then(() => {\r",
+											"        console.log(\"Both team and PR created successfully!\");\r",
+											"    })\r",
+											"    .catch(error => {\r",
+											"        console.error(\"Error:\", error);\r",
+											"    });"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"var responseJSON = pm.response.json();",
+											"",
+											"// Test the response body structure and values",
+											"pm.test(\"Response body structure is valid\", function () {",
+											"    pm.expect(responseJSON).to.have.all.keys('pr', 'replaced_by');",
+											"});",
+											"",
+											"// Test for required fields in the pr object",
+											"pm.test(\"PR object contains the required fields\", function () {",
+											"    pm.expect(responseJSON.pr).to.have.all.keys('assigned_reviewers', 'author_id', 'pull_request_id', 'pull_request_name', 'status');",
+											"});",
+											"",
+											"// Validate pr status is 'OPEN'",
+											"pm.test(\"Status is 'OPEN'\", function () {",
+											"    pm.expect(responseJSON.pr.status).to.equal('OPEN');",
+											"});",
+											"",
+											"// // Validate that pr name is same as env variable pr_name",
+											"pm.test(\"Check pr_name is env pr_name\", function () {",
+											"    const expected = pm.environment.get(\"pr_name\");",
+											"    pm.expect(responseJSON.pr.pull_request_name).to.equal(expected);",
+											"});",
+											"",
+											"// Validate that pr id is same as env variable pr_id",
+											"pm.test(\"Check pull_request_id is env pr_id\", function () {",
+											"    const expected = pm.environment.get(\"pr_id\");",
+											"    pm.expect(responseJSON.pr.pull_request_id).to.equal(expected);",
+											"});",
+											"",
+											"// Validate that author user id is same as env variable author_id",
+											"pm.test(\"Check author_id is env author_id\", function () {",
+											"    const expected = pm.environment.get(\"author_id\");",
+											"    pm.expect(responseJSON.pr.author_id).to.equal(expected);",
+											"});",
+											"",
+											"// Check that assigned_reviewers contains reviewer2_id",
+											"pm.test(\"assigned_reviewers contains reviewer2_id\", function () {",
+											"    const reviewer2 = pm.environment.get(\"reviewer2_id\");",
+											"    pm.expect(responseJSON.pr.assigned_reviewers).to.include(reviewer2);",
+											"});",
+											"",
+											"// Check that assigned_reviewers does not contains reviewer1_id",
+											"pm.test(\"assigned_reviewers does not contains reviewer2_id\", function () {",
+											"    const reviewer1 = pm.environment.get(\"reviewer1_id\");",
+											"    pm.expect(responseJSON.pr.assigned_reviewers).to.not.include(reviewer1);",
+											"});",
+											"",
+											"// Check that assigned_reviewers does not contains author_id",
+											"pm.test(\"assigned_reviewers does not contains author_id\", function () {",
+											"    const author_id = pm.environment.get(\"author_id\");",
+											"    pm.expect(responseJSON.pr.assigned_reviewers).to.not.include(author_id);",
+											"});",
+											"",
+											"// Check that assigned_reviewers contains replaced_by",
+											"pm.test(\"assigned_reviewers contains replaced_by\", function () {",
+											"    pm.expect(responseJSON.pr.assigned_reviewers).to.include(responseJSON.replaced_by);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"old_reviewer_id\": \"{{reviewer1_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/reassign",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"reassign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR reassign but pr not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"pm.environment.set(\"random_string\", randomString(20));"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{random_string}}\",\r\n  \"old_reviewer_id\": \"{{reviewer1_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/reassign",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"reassign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR reassign but user not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"pm.environment.set(\"random_string\", randomString(20));"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"old_reviewer_id\": \"{{random_string}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/reassign",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"reassign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR reassign with no candidate",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const timeout = 0;\r",
+											"\r",
+											"pm.environment.set(\"team_name\", randomString(20));\r",
+											"pm.environment.set(\"pr_id\", randomString(20));\r",
+											"pm.environment.set(\"pr_name\", randomString(20));\r",
+											"pm.environment.set(\"author_id\", randomString(20));\r",
+											"pm.environment.set(\"author_name\", randomString(20));\r",
+											"pm.environment.set(\"member1_id\", randomString(20));\r",
+											"pm.environment.set(\"member1_name\", randomString(20));\r",
+											"pm.environment.set(\"member2_id\", randomString(20));\r",
+											"pm.environment.set(\"member2_name\", randomString(20));\r",
+											"\r",
+											"function createTeam() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"team_name\": pm.environment.get(\"team_name\"),\r",
+											"            \"members\": [\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"author_id\"),\r",
+											"                \"username\": pm.environment.get(\"author_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member1_id\"),\r",
+											"                \"username\": pm.environment.get(\"member1_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member2_id\"),\r",
+											"                \"username\": pm.environment.get(\"member2_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"        ]\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"Team creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"Team created successfully\");\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"Team creation failed:\", response.body);\r",
+											"                reject(new Error(\"Team creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"function createPR() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"            \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"            \"author_id\": pm.environment.get(\"author_id\")\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"PR creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"PR created successfully:\");\r",
+											"                const r = response.json();\r",
+											"                const rev = r.pr.assigned_reviewers;\r",
+											"                pm.environment.set(\"reviewer1_id\", rev[0]);\r",
+											"                pm.environment.set(\"reviewer2_id\", rev[1]);\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"PR creation failed\");\r",
+											"                reject(new Error(\"PR creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"createTeam()\r",
+											"    .then(() => createPR())\r",
+											"    .then(() => {\r",
+											"        console.log(\"Both team and PR created successfully!\");\r",
+											"    })\r",
+											"    .catch(error => {\r",
+											"        console.error(\"Error:\", error);\r",
+											"    });"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 409\", function () {",
+											"    pm.response.to.have.status(409);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NO_CANDIDATE\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"no active replacement candidate in team\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"old_reviewer_id\": \"{{reviewer1_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/reassign",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"reassign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR reassign but not assigned",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const timeout = 0;\r",
+											"\r",
+											"pm.environment.set(\"team_name\", randomString(20));\r",
+											"pm.environment.set(\"pr_id\", randomString(20));\r",
+											"pm.environment.set(\"pr_name\", randomString(20));\r",
+											"pm.environment.set(\"author_id\", randomString(20));\r",
+											"pm.environment.set(\"author_name\", randomString(20));\r",
+											"pm.environment.set(\"member1_id\", randomString(20));\r",
+											"pm.environment.set(\"member1_name\", randomString(20));\r",
+											"pm.environment.set(\"member2_id\", randomString(20));\r",
+											"pm.environment.set(\"member2_name\", randomString(20));\r",
+											"\r",
+											"function createTeam() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"team_name\": pm.environment.get(\"team_name\"),\r",
+											"            \"members\": [\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"author_id\"),\r",
+											"                \"username\": pm.environment.get(\"author_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member1_id\"),\r",
+											"                \"username\": pm.environment.get(\"member1_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member2_id\"),\r",
+											"                \"username\": pm.environment.get(\"member2_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"        ]\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"Team creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"Team created successfully\");\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"Team creation failed:\", response.body);\r",
+											"                reject(new Error(\"Team creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"function createPR() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"            \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"            \"author_id\": pm.environment.get(\"author_id\")\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"PR creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"PR created successfully:\");\r",
+											"                const r = response.json();\r",
+											"                const rev = r.pr.assigned_reviewers;\r",
+											"                pm.environment.set(\"reviewer1_id\", rev[0]);\r",
+											"                pm.environment.set(\"reviewer2_id\", rev[1]);\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"PR creation failed\");\r",
+											"                reject(new Error(\"PR creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"createTeam()\r",
+											"    .then(() => createPR())\r",
+											"    .then(() => {\r",
+											"        console.log(\"Both team and PR created successfully!\");\r",
+											"    })\r",
+											"    .catch(error => {\r",
+											"        console.error(\"Error:\", error);\r",
+											"    });"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 409\", function () {",
+											"    pm.response.to.have.status(409);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_ASSIGNED\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"reviewer is not assigned to this PR\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"old_reviewer_id\": \"{{author_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/reassign",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"reassign"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PR reassign already merged",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const timeout = 0;\r",
+											"\r",
+											"pm.environment.set(\"team_name\", randomString(20));\r",
+											"pm.environment.set(\"pr_id\", randomString(20));\r",
+											"pm.environment.set(\"pr_name\", randomString(20));\r",
+											"pm.environment.set(\"author_id\", randomString(20));\r",
+											"pm.environment.set(\"author_name\", randomString(20));\r",
+											"pm.environment.set(\"member1_id\", randomString(20));\r",
+											"pm.environment.set(\"member1_name\", randomString(20));\r",
+											"pm.environment.set(\"member2_id\", randomString(20));\r",
+											"pm.environment.set(\"member2_name\", randomString(20));\r",
+											"pm.environment.set(\"member3_id\", randomString(20));\r",
+											"pm.environment.set(\"member3_name\", randomString(20));\r",
+											"\r",
+											"function createTeam() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"team_name\": pm.environment.get(\"team_name\"),\r",
+											"            \"members\": [\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"author_id\"),\r",
+											"                \"username\": pm.environment.get(\"author_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member1_id\"),\r",
+											"                \"username\": pm.environment.get(\"member1_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member2_id\"),\r",
+											"                \"username\": pm.environment.get(\"member2_name\"),\r",
+											"                \"is_active\": true\r",
+											"            },\r",
+											"            {\r",
+											"                \"user_id\": pm.environment.get(\"member3_id\"),\r",
+											"                \"username\": pm.environment.get(\"member3_name\"),\r",
+											"                \"is_active\": true\r",
+											"            }\r",
+											"        ]\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"Team creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"Team created successfully\");\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"Team creation failed:\", response.body);\r",
+											"                reject(new Error(\"Team creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"function createPR() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"            \"pull_request_name\": pm.environment.get(\"pr_name\"),\r",
+											"            \"author_id\": pm.environment.get(\"author_id\")\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/pullRequest/create\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"PR creation status:\", response.code);\r",
+											"            if (response.code === 201) {\r",
+											"                console.log(\"PR created successfully:\");\r",
+											"                const r = response.json();\r",
+											"                const rev = r.pr.assigned_reviewers;\r",
+											"                pm.environment.set(\"reviewer1_id\", rev[0]);\r",
+											"                pm.environment.set(\"reviewer2_id\", rev[1]);\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"PR creation failed\");\r",
+											"                reject(new Error(\"PR creation failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"function mergePR() {\r",
+											"    return new Promise((resolve, reject) => {\r",
+											"        var body = {\r",
+											"            \"pull_request_id\": pm.environment.get(\"pr_id\"),\r",
+											"        };\r",
+											"\r",
+											"        pm.sendRequest({\r",
+											"            url: pm.environment.get(\"url\") + \"/pullRequest/merge\",\r",
+											"            method: 'POST',\r",
+											"            header: {\r",
+											"                'Content-Type': 'application/json'\r",
+											"            },\r",
+											"            body: {\r",
+											"                mode: 'raw',\r",
+											"                raw: JSON.stringify(body)\r",
+											"            }\r",
+											"        }, function (err, response) {\r",
+											"            console.log(\"PR merge status:\", response.code);\r",
+											"            if (response.code === 200) {\r",
+											"                console.log(\"PR merged successfully:\");\r",
+											"                setTimeout(resolve, timeout);\r",
+											"            } else {\r",
+											"                console.log(\"PR merge failed\");\r",
+											"                reject(new Error(\"PR merge failed\"));\r",
+											"            }\r",
+											"        });\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"createTeam()\r",
+											"    .then(() => createPR())\r",
+											"    .then(() => mergePR())\r",
+											"    .then(() => {\r",
+											"        console.log(\"Both team and PR created successfully!\");\r",
+											"    })\r",
+											"    .catch(error => {\r",
+											"        console.error(\"Error:\", error);\r",
+											"    });"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 409\", function () {",
+											"    pm.response.to.have.status(409);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"PR_MERGED\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"cannot reassign on merged PR\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pull_request_id\": \"{{pr_id}}\",\r\n  \"old_reviewer_id\": \"{{reviewer1_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/pullRequest/reassign",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"pullRequest",
+										"reassign"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
