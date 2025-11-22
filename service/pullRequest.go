@@ -71,6 +71,13 @@ func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string
 	if pr == nil || team == nil {
 		return nil, "", domain.ErrNotFound
 	}
+	reviewer, err := s.userRepo.GetUserById(ctx, reviewerID)
+	if err != nil {
+		return nil, "", err
+	}
+	if reviewer == nil {
+		return nil, "", domain.ErrNotFound
+	}
 	if pr.Status == domain.Merged {
 		return nil, "", domain.ErrPRMerged
 	}

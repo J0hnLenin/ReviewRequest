@@ -77,7 +77,7 @@ func (h *Handler) PRReassign(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		PullRequestID string `json:"pull_request_id"`
-		OldUserID     string `json:"old_user_id"`
+		OldUserID     string `json:"old_reviewer_id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
