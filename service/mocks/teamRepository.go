@@ -26,3 +26,11 @@ func (m *MockRepository) SaveTeam(ctx context.Context, t *domain.Team) error {
 	args := m.Called(ctx, t)
 	return args.Error(0)
 }
+
+func (m *MockRepository) ChangeTeamActive(ctx context.Context, name string, active bool) (*domain.Team, error) {
+    args := m.Called(ctx, name, active)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*domain.Team), args.Error(1)
+}

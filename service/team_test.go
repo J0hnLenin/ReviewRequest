@@ -291,3 +291,188 @@ func TestTeamSave_PartialSaveError(t *testing.T) {
 	assert.Equal(t, expectedError, err)
 	mockRepo.AssertExpectations(t)
 }
+
+func TestChangeTeamActive_Success(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "test-team"
+    active := true
+
+    updatedTeam := &domain.Team{
+        Name: teamName,
+        Members: []*domain.User{
+            {ID: "user1", Name: "User One", TeamName: teamName, IsActive: true},
+            {ID: "user2", Name: "User Two", TeamName: teamName, IsActive: true},
+        },
+    }
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(updatedTeam, nil)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.NoError(t, err)
+    assert.NotNil(t, team)
+    assert.Equal(t, teamName, team.Name)
+    assert.Len(t, team.Members, 2)
+    assert.True(t, team.Members[0].IsActive)
+    assert.True(t, team.Members[1].IsActive)
+
+    mockRepo.AssertExpectations(t)
+}
+
+func TestChangeTeamActive_TeamNotFound(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "non-existent-team"
+    active := true
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(nil, nil)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.Error(t, err)
+    assert.Nil(t, team)
+    assert.Equal(t, domain.ErrNotFound, err)
+
+    mockRepo.AssertExpectations(t)
+}
+
+func TestChangeTeamActive_GetTeamError(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "test-team"
+    active := true
+    expectedError := ErrQueryExecution
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(nil, expectedError)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.Error(t, err)
+    assert.Nil(t, team)
+    assert.Equal(t, expectedError, err)
+
+    mockRepo.AssertExpectations(t)
+}
+
+func TestChangeTeamActive_ChangeActiveError(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "test-team"
+    active := true
+    expectedError := ErrQueryExecution
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(nil, expectedError)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.Error(t, err)
+    assert.Nil(t, team)
+    assert.Equal(t, expectedError, err)
+
+    mockRepo.AssertExpectations(t)
+}
+
+func TestChangeTeamActive_DeactivateTeam(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "test-team"
+    active := false
+
+    updatedTeam := &domain.Team{
+        Name: teamName,
+        Members: []*domain.User{
+            {ID: "user1", Name: "User One", TeamName: teamName, IsActive: false},
+            {ID: "user2", Name: "User Two", TeamName: teamName, IsActive: false},
+        },
+    }
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(updatedTeam, nil)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.NoError(t, err)
+    assert.NotNil(t, team)
+    assert.Equal(t, teamName, team.Name)
+    assert.Len(t, team.Members, 2)
+    assert.False(t, team.Members[0].IsActive)
+    assert.False(t, team.Members[1].IsActive)
+
+    mockRepo.AssertExpectations(t)
+}
+
+func TestChangeTeamActive_EmptyTeam(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "empty-team"
+    active := true
+
+    updatedTeam := &domain.Team{
+        Name:    teamName,
+        Members: []*domain.User{},
+    }
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(updatedTeam, nil)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.NoError(t, err)
+    assert.NotNil(t, team)
+    assert.Equal(t, teamName, team.Name)
+    assert.Empty(t, team.Members)
+
+    mockRepo.AssertExpectations(t)
+}
+
+func TestChangeTeamActive_ConnectionError(t *testing.T) {
+    // Arrange
+    mockRepo := &mocks.MockRepository{}
+
+    service := NewService(mockRepo)
+
+    teamName := "test-team"
+    active := true
+    connectionError := ErrConnection
+
+    mockRepo.On("ChangeTeamActive", mock.Anything, teamName, active).Return(nil, connectionError)
+
+    // Act
+    team, err := service.TeamChangeActive(context.Background(), teamName, active)
+
+    // Assert
+    assert.Error(t, err)
+    assert.Nil(t, team)
+    assert.Equal(t, connectionError, err)
+
+    mockRepo.AssertExpectations(t)
+}

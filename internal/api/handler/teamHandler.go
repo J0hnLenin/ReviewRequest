@@ -96,3 +96,34 @@ func (h *Handler) convertMembersToResponse(members []*domain.User) []map[string]
 	}
 	return result
 }
+
+func (h *Handler) TeamSetIsActive(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
+		return
+	}
+
+	var req struct {
+		TeamNameID   string `json:"team_name"`
+		IsActive bool   `json:"is_active"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
+		return
+	}
+
+	team, err := h.service.TeamChangeActive(r.Context(), req.TeamNameID, req.IsActive)
+	if err != nil {
+		h.handleError(w, err)
+		return
+	}
+
+	response := map[string]interface{}{
+		"team_name": team.Name,
+		"members":   h.convertMembersToResponse(team.Members),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}

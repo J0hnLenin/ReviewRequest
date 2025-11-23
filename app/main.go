@@ -28,6 +28,7 @@ func main() {
 
     http.HandleFunc("/team/add", h.TeamAdd)
     http.HandleFunc("/team/get", h.TeamGet)
+    http.HandleFunc("/team/setIsActive", h.TeamSetIsActive)
     http.HandleFunc("/users/setIsActive", h.UserSetIsActive)
     http.HandleFunc("/pullRequest/create", h.PRCreate)
     http.HandleFunc("/pullRequest/merge", h.PRMerge)

@@ -465,6 +465,329 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "isActive change",
+					"item": [
+						{
+							"name": "Change team active",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const team = randomString(20);\r",
+											"const m1 = randomString(20);\r",
+											"const m2 = randomString(20);\r",
+											"pm.environment.set(\"random_team\", team);\r",
+											"pm.environment.set(\"u1\", m1);\r",
+											"pm.environment.set(\"u2\", m2);\r",
+											"\r",
+											"\r",
+											"const body = {\r",
+											"  \"team_name\": pm.environment.get(\"random_team\"),\r",
+											"  \"members\": [\r",
+											"    {\r",
+											"      \"user_id\": pm.environment.get(\"u1\"),\r",
+											"      \"username\": \"Member1\",\r",
+											"      \"is_active\": true\r",
+											"    },\r",
+											"    {\r",
+											"      \"user_id\": pm.environment.get(\"u2\"),\r",
+											"      \"username\": \"Member2\",\r",
+											"      \"is_active\": true\r",
+											"    }\r",
+											"  ]\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 200",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"let jsonData;",
+											"try {",
+											"    jsonData = pm.response.json();",
+											"} catch (e) {",
+											"    pm.test(\"Response body is valid JSON\", function () {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    });",
+											"}",
+											"",
+											"// Response body contains 'members' array and 'team_name'",
+											"pm.test(\"Response body contains 'members' array and 'team_name'\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"members\");",
+											"    pm.expect(jsonData).to.have.property(\"team_name\");",
+											"});",
+											"",
+											"// 'team_name' matches environment variable 'random_team'",
+											"pm.test(\"team_name matches environment variable\", function () {",
+											"    const expectedTeamName = pm.environment.get(\"random_team\");",
+											"    pm.expect(jsonData.team_name).to.equal(expectedTeamName);",
+											"});",
+											"",
+											"// 'members' array contains correct objects with properties and values",
+											"pm.test(\"members array contains correct objects\", function () {",
+											"    pm.expect(jsonData.members).to.be.an(\"array\");",
+											"    const expectedMembers = [",
+											"        {",
+											"            user_id: pm.environment.get(\"u1\"),",
+											"            username: \"Member1\",",
+											"            is_active: false",
+											"        },",
+											"        {",
+											"            user_id: pm.environment.get(\"u2\"),",
+											"            username: \"Member2\",",
+											"            is_active: false",
+											"        }",
+											"    ];",
+											"",
+											"    expectedMembers.forEach(expected => {",
+											"        const found = jsonData.members.find(m => m.user_id === expected.user_id && m.username === expected.username && m.is_active === expected.is_active);",
+											"        pm.expect(found, `Member with user_id ${expected.user_id}, username ${expected.username}, is_active ${expected.is_active} not found`).to.exist;",
+											"    });",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"team_name\": \"{{random_team}}\",\r\n  \"is_active\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/team/setIsActive",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"team",
+										"setIsActive"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change team active empty team",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const team = randomString(20);\r",
+											"\r",
+											"pm.environment.set(\"random_team\", team);\r",
+											"\r",
+											"const body = {\r",
+											"  \"team_name\": pm.environment.get(\"random_team\"),\r",
+											"  \"members\": []\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 200",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"let jsonData;",
+											"try {",
+											"    jsonData = pm.response.json();",
+											"} catch (e) {",
+											"    pm.test(\"Response body is valid JSON\", function () {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    });",
+											"}",
+											"",
+											"// Response body contains 'members' array and 'team_name'",
+											"pm.test(\"Response body contains 'members' array and 'team_name'\", function () {",
+											"    pm.expect(jsonData).to.have.property(\"members\");",
+											"    pm.expect(jsonData).to.have.property(\"team_name\");",
+											"});",
+											"",
+											"// 'team_name' matches environment variable 'random_team'",
+											"pm.test(\"team_name matches environment variable\", function () {",
+											"    const expectedTeamName = pm.environment.get(\"random_team\");",
+											"    pm.expect(jsonData.team_name).to.equal(expectedTeamName);",
+											"});",
+											"",
+											"// 'members' array contains correct objects with properties and values",
+											"pm.test(\"members array contains correct objects\", function () {",
+											"    pm.expect(jsonData.members).to.be.an(\"array\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"team_name\": \"{{random_team}}\",\r\n  \"is_active\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/team/setIsActive",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"team",
+										"setIsActive"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change team active not exists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Status code is 404",
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"// Response body contains 'error' object with correct code and message",
+											"pm.test(\"Response body contains correct 'error' object\", function () {",
+											"    let jsonData;",
+											"    try {",
+											"        jsonData = pm.response.json();",
+											"    } catch (e) {",
+											"        pm.expect.fail(\"Response body is not valid JSON\");",
+											"    }",
+											"    pm.expect(jsonData).to.have.property(\"error\");",
+											"    pm.expect(jsonData.error).to.have.property(\"code\", \"NOT_FOUND\");",
+											"    pm.expect(jsonData.error).to.have.property(\"message\", \"resource not found\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"user_id\": \"{{random_string}}\",\r\n  \"is_active\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/users/setIsActive",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"setIsActive"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		},
@@ -481,7 +804,50 @@
 									"listen": "prerequest",
 									"script": {
 										"exec": [
-											""
+											"function randomString(length) {\r",
+											"    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';\r",
+											"    let result = '';\r",
+											"    for (let i = 0; i < length; i++) {\r",
+											"        result += chars.charAt(Math.floor(Math.random() * chars.length));\r",
+											"    }\r",
+											"    return result;\r",
+											"}\r",
+											"\r",
+											"const team = randomString(20);\r",
+											"const m1 = randomString(20);\r",
+											"const m2 = randomString(20);\r",
+											"pm.environment.set(\"random_team\", team);\r",
+											"pm.environment.set(\"u1\", m1);\r",
+											"pm.environment.set(\"u2\", m2);\r",
+											"\r",
+											"\r",
+											"const body = {\r",
+											"  \"team_name\": pm.environment.get(\"random_team\"),\r",
+											"  \"members\": [\r",
+											"    {\r",
+											"      \"user_id\": pm.environment.get(\"u1\"),\r",
+											"      \"username\": \"Member1\",\r",
+											"      \"is_active\": true\r",
+											"    },\r",
+											"    {\r",
+											"      \"user_id\": pm.environment.get(\"u2\"),\r",
+											"      \"username\": \"Member2\",\r",
+											"      \"is_active\": true\r",
+											"    }\r",
+											"  ]\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest({\r",
+											"    url: pm.environment.get(\"url\") + \"/team/add\",\r",
+											"    method: 'POST',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json'\r",
+											"    },\r",
+											"    body: {\r",
+											"        mode: 'raw',\r",
+											"        raw: JSON.stringify(body)\r",
+											"    }\r",
+											"});"
 										],
 										"type": "text/javascript",
 										"packages": {},
@@ -1303,7 +1669,7 @@
 											"    return result;\r",
 											"}\r",
 											"\r",
-											"timeout = 0;\r",
+											"timeout = 100;\r",
 											"\r",
 											"pm.environment.set(\"team_name\", randomString(20));\r",
 											"pm.environment.set(\"pr_id\", randomString(20));\r",
@@ -2233,6 +2599,28 @@
 							"response": []
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "Statistics",
+			"item": [
+				{
+					"name": "Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/statistics",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"statistics"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}

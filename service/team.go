@@ -27,3 +27,14 @@ func (s *Service) TeamGetByName(ctx context.Context, n string) (*domain.Team, er
 	}
 	return team, nil
 }
+
+func (s *Service) TeamChangeActive(ctx context.Context, name string, newValue bool) (*domain.Team, error) {
+	team, err := s.repo.ChangeTeamActive(ctx, name, newValue)
+	if err != nil {
+		return nil, err
+	}
+	if team == nil {
+		return nil, domain.ErrNotFound
+	}
+	return team, nil
+}

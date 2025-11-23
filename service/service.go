@@ -10,6 +10,7 @@ type Repository interface {
 	GetTeamByName(ctx context.Context, name string) (*domain.Team, error)
 	GetTeamByUser(ctx context.Context, userID string) (*domain.Team, error)
 	SaveTeam(ctx context.Context, t *domain.Team) error
+	ChangeTeamActive(ctx context.Context, name string, active bool) (*domain.Team, error)
 
 	GetUserById(ctx context.Context, id string) (*domain.User, error)
 	SaveUser(ctx context.Context, u *domain.User) error

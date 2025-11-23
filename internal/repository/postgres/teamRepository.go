@@ -115,3 +115,66 @@ func (r *PostgresRepository) SaveTeam(ctx context.Context, t *domain.Team) error
 
 	return tx.Commit()
 }
+
+func (r *PostgresRepository) ChangeTeamActive(ctx context.Context, name string, active bool) (*domain.Team, error) {
+    tx, err := r.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, service.ErrQueryExecution
+    }
+    defer tx.Rollback()
+
+    updateQuery := `
+        UPDATE users 
+        SET is_active = $1 
+        WHERE team_name = $2`
+
+    _, err = tx.ExecContext(ctx, updateQuery, active, name)
+    if err != nil {
+        return nil, service.ErrQueryExecution
+    }
+
+    teamQuery := `
+        SELECT t.team_name, 
+               COALESCE(array_agg(u.id ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_ids,
+               COALESCE(array_agg(u.user_name ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_names,
+               COALESCE(array_agg(u.is_active ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_active
+        FROM teams t
+        LEFT JOIN users u ON t.team_name = u.team_name
+        WHERE t.team_name = $1
+        GROUP BY t.team_name`
+
+    var team domain.Team
+    var memberIDs, memberNames []string
+    var memberActive []bool
+
+    err = tx.QueryRowContext(ctx, teamQuery, name).Scan(
+        &team.Name,
+        pq.Array(&memberIDs),
+        pq.Array(&memberNames),
+        pq.Array(&memberActive),
+    )
+
+    if err == sql.ErrNoRows {
+        tx.Rollback()
+        return nil, nil
+    }
+    if err != nil {
+        return nil, service.ErrQueryExecution
+    }
+
+    team.Members = make([]*domain.User, len(memberIDs))
+    for i := range memberIDs {
+        team.Members[i] = &domain.User{
+            ID:       memberIDs[i],
+            Name:     memberNames[i],
+            TeamName: team.Name,
+            IsActive: memberActive[i],
+        }
+    }
+
+    if err := tx.Commit(); err != nil {
+        return nil, service.ErrQueryExecution
+    }
+
+    return &team, nil
+}
