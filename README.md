@@ -1,8 +1,18 @@
 # ReviewRequest
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/J0hnLenin/ReviewRequest)](https://goreportcard.com/report/github.com/J0hnLenin/ReviewReques)
-[![Coverage Status](https://coveralls.io/repos/github/J0hnLenin/ReviewRequest/badge.svg?branch=main)](https://coveralls.io/github/J0hnLenin/ReviewRequest)
 [![Tests](https://github.com/J0hnLenin/ReviewRequest/actions/workflows/coverage.yml/badge.svg)](https://github.com/J0hnLenin/ReviewRequest/actions/workflows/coverage.yml)
+[![Coverage Status](https://coveralls.io/repos/github/J0hnLenin/ReviewRequest/badge.svg?branch=main)](https://coveralls.io/github/J0hnLenin/ReviewRequest)
+
+![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=for-the-badge&logo=go)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+![Testify](https://img.shields.io/badge/-Testify-00ADD8?logo=go&logoColor=white)
+![PgAdmin](https://img.shields.io/badge/-PgAdmin-4169E1?logo=postgresql&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/-Docker%20Compose-2496ED?logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)
+![Postman](https://img.shields.io/badge/-Postman-FF6C37?logo=postman&logoColor=white)
+![Coveralls](https://img.shields.io/badge/-Coveralls-3F5767?logo=coveralls&logoColor=white)
 
 Сервис для автоматического назначения членов команы на код-ревью пул-реквестов
 
@@ -24,11 +34,11 @@ cd ./ReviewRequest
 docker compose up -d
 ```
 
-4. После этого можно проверить работу сервиса:
-   Port:8080 - backend приложения
-   Post:5430 - postgres
-   Port:5050 - pgAdmin
-
+4. После этого можно проверить работу сервиса:  
+   :8080 - backend приложения  
+   Post:5430 - postgres  
+   Port:5050 - pgAdmin  
+  
 При этом порт postgres открыт наружу для тестов и отладки, в продакшн-реализации нужно его закрыть. Если нет необходимости в pgAdmin, его тоже можно убрать.
 
 # Вопросы и принятые решения
@@ -77,6 +87,14 @@ docker compose up -d
 
 # Тесты
 
+## Unit-тесты
+
+Написал юнит тесты для сервисного слоя. Не покрыт апи и код, выполняющий запросы в postgres, однако этот код я протестировал во время E2E-тестов. 
+
+Запуск тестов:
+```
+go test -cover ./service
+```
 ## E2E-тестирование
 
 Для тестирования использовал postman. Проверил все запросы из спецификации api (/docs/openapi.yml).
@@ -84,8 +102,3 @@ docker compose up -d
 
 ![tests_1](./docs/E2E_1.png)
 ![tests_2](./docs/E2E_2.png)
-
-## Unit-тесты
-
-Написал юнит тесты для сервисного слоя. Не покрыт апи и код, выполняющий запросы в postgres, однако этот код я протестировал во время E2E-тестов. 
-
