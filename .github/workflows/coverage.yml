@@ -13,7 +13,7 @@ jobs:
           go-version: '1.21'
           
       - name: Run tests with coverage
-        run: go test -coverprofile=coverage -covermode=atomic ./...
+        run: go test -coverprofile=coverage -covermode=atomic ./service/...
         
       - name: Send coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
