@@ -55,7 +55,49 @@ func TestValidCandidate(t *testing.T) {
 	assert.False(t, validCandidate(pr, user))
 }
 
-func TestFillReviewers(t *testing.T) {
+func TestFillReviewers_ZeroReviewers(t *testing.T) {
+	pr := &domain.PullRequest{
+		AuthorID:    "author1",
+		ReviewersID: []string{},
+	}
+
+	team := &domain.Team{
+		Name: "test-team",
+		Members: []*domain.User{
+			{ID: "author1", Name: "Author", TeamName: "test-team", IsActive: true},
+		},
+	}
+
+	fillReviewers(pr, team)
+
+	assert.Len(t, pr.ReviewersID, 0)
+	assert.NotContains(t, pr.ReviewersID, "author1")
+}
+
+func TestFillReviewers_OneReviewer(t *testing.T) {
+	pr := &domain.PullRequest{
+		AuthorID:    "author1",
+		ReviewersID: []string{},
+	}
+
+	team := &domain.Team{
+		Name: "test-team",
+		Members: []*domain.User{
+			{ID: "author1", Name: "Author", TeamName: "test-team", IsActive: true},
+			{ID: "user2", Name: "User 2", TeamName: "test-team", IsActive: true},
+			{ID: "user4", Name: "User 3", TeamName: "test-team", IsActive: false},
+		},
+	}
+
+	fillReviewers(pr, team)
+
+	assert.Len(t, pr.ReviewersID, 1)
+	assert.Contains(t, pr.ReviewersID, "user2")
+	assert.NotContains(t, pr.ReviewersID, "author1")
+	assert.NotContains(t, pr.ReviewersID, "user3")
+}
+
+func TestFillReviewers_TwoReviewers(t *testing.T) {
 	pr := &domain.PullRequest{
 		AuthorID:    "author1",
 		ReviewersID: []string{},
@@ -77,3 +119,23 @@ func TestFillReviewers(t *testing.T) {
 	assert.NotContains(t, pr.ReviewersID, "author1")
 	assert.NotContains(t, pr.ReviewersID, "user4")
 }
+
+func TestReplaceReviewer_Sucsess(t *testing.T) {
+	pr := &domain.PullRequest{
+		AuthorID:    "author1",
+		ReviewersID: []string{"old_reviewer", "need_to_replace_reviewer",},
+	}
+	err := replaceReviewer(pr, "need_to_replace_reviewer", "new_reviewer")
+	assert.NoError(t, err)
+	assert.ElementsMatch(t, pr.ReviewersID, []string{"old_reviewer", "new_reviewer",})
+}	
+
+func TestReplaceReviewer_NotAssigned(t *testing.T) {
+	pr := &domain.PullRequest{
+		AuthorID:    "author1",
+		ReviewersID: []string{},
+	}
+	err := replaceReviewer(pr, "user1", "user2")
+	assert.Error(t, err)
+	assert.Equal(t, domain.ErrNotAssigned, err)
+}	

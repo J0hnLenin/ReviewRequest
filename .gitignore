@@ -6,7 +6,9 @@
 
 *.test
 *.out
-coverage.*
+coverage.html
+coverage
 *.coverprofile
 profile.cov
 go.work.sum
+
