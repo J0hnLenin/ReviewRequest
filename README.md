@@ -1,5 +1,9 @@
 # ReviewRequest
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/J0hnLenin/ReviewRequest)](https://goreportcard.com/report/github.com/J0hnLenin/ReviewReques)
+[![Coverage Status](https://coveralls.io/repos/github/J0hnLenin/ReviewRequest/badge.svg?branch=main)](https://coveralls.io/github/J0hnLenin/ReviewRequest)
+[![Tests](https://github.com/J0hnLenin/ReviewRequest/actions/workflows/coverage.yml/badge.svg)](https://github.com/J0hnLenin/ReviewRequest/actions/workflows/coverage.yml)
+
 Сервис для автоматического назначения членов команы на код-ревью пул-реквестов
 
 # Установка и запуск
@@ -83,7 +87,5 @@ docker compose up -d
 
 ## Unit-тесты
 
-Написал юнит тесты для сервисного слоя. На текущий момент покрытие 89%. Не покрыл случаи,
-когда от базы данных возвращается ошибка выполныения запроса, например неверный синтаксис в запросе или потеря соединения. Не знаю необходимо ли это, и, если необходимо, то могу дополнительно покрыть тестами и эти случаи. Однако в коде сервисного слоя эти сценарии обрабатываются отдельно.
+Написал юнит тесты для сервисного слоя. Не покрыт апи и код, выполняющий запросы в postgres, однако этот код я протестировал во время E2E-тестов. 
 
-Не покрыт юнит-тестами код апи и код, выполняющий запросы в postgres. Однако этот код я протестировал во время E2E-тестов. 

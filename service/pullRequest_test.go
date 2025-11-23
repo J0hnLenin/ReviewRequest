@@ -613,3 +613,351 @@ func TestPRreassign_ButReviewerNotFound(t *testing.T) {
 
 	mockPRRepo.AssertNotCalled(t, "SavePR")
 }
+
+// Новые тесты для покрытия ошибок базы данных
+
+func TestPRCreate_GetPRByIdError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	title := "Test PR"
+	authorID := "user1"
+	expectedError := ErrQueryExecution
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(nil, expectedError)
+
+	// Act
+	pr, err := service.PRCreate(context.Background(), prID, title, authorID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, expectedError, err)
+
+	mockTeamRepo.AssertNotCalled(t, "GetTeamByUser")
+	mockPRRepo.AssertNotCalled(t, "SavePR")
+}
+
+func TestPRCreate_GetTeamByUserError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	title := "Test PR"
+	authorID := "user1"
+	expectedError := ErrQueryExecution
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(nil, nil)
+	mockTeamRepo.On("GetTeamByUser", mock.Anything, authorID).Return(nil, expectedError)
+
+	// Act
+	pr, err := service.PRCreate(context.Background(), prID, title, authorID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, expectedError, err)
+
+	mockPRRepo.AssertNotCalled(t, "SavePR")
+}
+
+func TestPRCreate_SavePRError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	title := "Test PR"
+	authorID := "user1"
+	expectedError := ErrQueryExecution
+
+	team := &domain.Team{
+		Name: "test-team",
+		Members: []*domain.User{
+			{ID: "user1", Name: "Author", TeamName: "test-team", IsActive: true},
+			{ID: "user2", Name: "Reviewer 1", TeamName: "test-team", IsActive: true},
+		},
+	}
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(nil, nil)
+	mockTeamRepo.On("GetTeamByUser", mock.Anything, authorID).Return(team, nil)
+	mockPRRepo.On("SavePR", mock.Anything, mock.AnythingOfType("*domain.PullRequest")).Return(expectedError)
+
+	// Act
+	pr, err := service.PRCreate(context.Background(), prID, title, authorID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, expectedError, err)
+
+	mockPRRepo.AssertExpectations(t)
+	mockTeamRepo.AssertExpectations(t)
+}
+
+func TestPRMerge_GetPRByIdError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	expectedError := ErrQueryExecution
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(nil, expectedError)
+
+	// Act
+	pr, err := service.PRMerge(context.Background(), prID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, expectedError, err)
+
+	mockPRRepo.AssertNotCalled(t, "SavePR")
+}
+
+func TestPRMerge_SavePRError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	expectedError := ErrQueryExecution
+
+	existingPR := &domain.PullRequest{
+		ID:          prID,
+		Title:       "Test PR",
+		AuthorID:    "user1",
+		ReviewersID: []string{"user2", "user3"},
+		Status:      domain.Open,
+		MergedAt:    nil,
+	}
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(existingPR, nil)
+	mockPRRepo.On("SavePR", mock.Anything, mock.AnythingOfType("*domain.PullRequest")).Return(expectedError)
+
+	// Act
+	pr, err := service.PRMerge(context.Background(), prID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, expectedError, err)
+
+	mockPRRepo.AssertExpectations(t)
+}
+
+func TestPRreassign_GetPRAndTeamError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	reviewerID := "reviewer1"
+	expectedError := ErrQueryExecution
+
+	mockPRRepo.On("GetPRAndTeam", mock.Anything, prID).Return(nil, nil, expectedError)
+
+	// Act
+	pr, newReviewerID, err := service.PRreassign(context.Background(), prID, reviewerID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, "", newReviewerID)
+	assert.Equal(t, expectedError, err)
+
+	mockUserRepo.AssertNotCalled(t, "GetUserById")
+	mockPRRepo.AssertNotCalled(t, "SavePR")
+}
+
+func TestPRreassign_GetUserByIdError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	reviewerID := "reviewer1"
+	expectedError := ErrQueryExecution
+
+	team := &domain.Team{
+		Name: "test-team",
+		Members: []*domain.User{
+			{ID: "user1", Name: "Author", TeamName: "test-team", IsActive: true},
+			{ID: "reviewer1", Name: "Reviewer", TeamName: "test-team", IsActive: true},
+		},
+	}
+
+	pr := &domain.PullRequest{
+		ID:          prID,
+		Title:       "Test PR",
+		AuthorID:    "user1",
+		ReviewersID: []string{reviewerID},
+		Status:      domain.Open,
+		MergedAt:    nil,
+	}
+
+	mockPRRepo.On("GetPRAndTeam", mock.Anything, prID).Return(pr, team, nil)
+	mockUserRepo.On("GetUserById", mock.Anything, reviewerID).Return(nil, expectedError)
+
+	// Act
+	resultPR, newReviewerID, err := service.PRreassign(context.Background(), prID, reviewerID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, resultPR)
+	assert.Equal(t, "", newReviewerID)
+	assert.Equal(t, expectedError, err)
+
+	mockPRRepo.AssertNotCalled(t, "SavePR")
+}
+
+func TestPRreassign_SavePRError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	teamName := "test-team"
+	oldReviewer := &domain.User{
+		ID:       "reviewer1",
+		Name:     "Reviewer 1",
+		TeamName: teamName,
+		IsActive: true,
+	}
+	
+	expectedError := ErrQueryExecution
+
+	team := &domain.Team{
+		Name: teamName,
+		Members: []*domain.User{
+			{ID: "user1", Name: "Author", TeamName: teamName, IsActive: true},
+			oldReviewer,
+			{ID: "reviewer2", Name: "Reviewer 2", TeamName: teamName, IsActive: true},
+		},
+	}
+
+	pr := &domain.PullRequest{
+		ID:          prID,
+		Title:       "Test PR",
+		AuthorID:    "user1",
+		ReviewersID: []string{oldReviewer.ID},
+		Status:      domain.Open,
+		MergedAt:    nil,
+	}
+
+	
+
+	mockPRRepo.On("GetPRAndTeam", mock.Anything, prID).Return(pr, team, nil)
+	mockUserRepo.On("GetUserById", mock.Anything, oldReviewer.ID).Return(oldReviewer, nil)
+	mockPRRepo.On("SavePR", mock.Anything, mock.AnythingOfType("*domain.PullRequest")).Return(expectedError)
+
+	// Act
+	resultPR, newReviewerID, err := service.PRreassign(context.Background(), prID, oldReviewer.ID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, resultPR)
+	assert.Equal(t, "", newReviewerID)
+	assert.Equal(t, expectedError, err)
+
+	mockPRRepo.AssertExpectations(t)
+	mockUserRepo.AssertExpectations(t)
+}
+
+func TestPRCreate_ConnectionError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	title := "Test PR"
+	authorID := "user1"
+	connectionError := ErrConnection
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(nil, connectionError)
+
+	// Act
+	pr, err := service.PRCreate(context.Background(), prID, title, authorID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, connectionError, err)
+}
+
+func TestPRMerge_ConnectionError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	connectionError := ErrConnection
+
+	mockPRRepo.On("GetPRById", mock.Anything, prID).Return(nil, connectionError)
+
+	// Act
+	pr, err := service.PRMerge(context.Background(), prID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, connectionError, err)
+}
+
+func TestPRreassign_ConnectionError(t *testing.T) {
+	// Arrange
+	mockTeamRepo := &mocks.MockRepository{}
+	mockUserRepo := &mocks.MockRepository{}
+	mockPRRepo := &mocks.MockRepository{}
+
+	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+
+	prID := "pr-123"
+	reviewerID := "reviewer1"
+	connectionError := ErrConnection
+
+	mockPRRepo.On("GetPRAndTeam", mock.Anything, prID).Return(nil, nil, connectionError)
+
+	// Act
+	pr, newReviewerID, err := service.PRreassign(context.Background(), prID, reviewerID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, pr)
+	assert.Equal(t, "", newReviewerID)
+	assert.Equal(t, connectionError, err)
+}
