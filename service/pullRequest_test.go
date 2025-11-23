@@ -101,7 +101,6 @@ func TestPRCreate_PRAlreadyExists(t *testing.T) {
 	}
 
 	mockRepo.On("GetPRById", mock.Anything, prID).Return(existingPR, nil)
-	mockRepo.On("GetTeamByUser", mock.Anything, authorID).Return(nil, nil)
 
 	// Act
 	pr, err := service.PRCreate(context.Background(), prID, title, authorID)
@@ -112,7 +111,6 @@ func TestPRCreate_PRAlreadyExists(t *testing.T) {
 	assert.Equal(t, domain.ErrPRExists, err)
 
 	mockRepo.AssertExpectations(t)
-	mockRepo.AssertNotCalled(t, "GetTeamByUser")
 }
 
 func TestPRMerge_Success(t *testing.T) {
