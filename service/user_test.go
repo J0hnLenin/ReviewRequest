@@ -12,11 +12,9 @@ import (
 
 func TestUserChangeActive_SuccessActivate(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 	currentUser := &domain.User{
@@ -26,8 +24,8 @@ func TestUserChangeActive_SuccessActivate(t *testing.T) {
 		IsActive: false,
 	}
 
-	mockUserRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
-	mockUserRepo.On("SaveUser", mock.Anything, mock.MatchedBy(func(user *domain.User) bool {
+	mockRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
+	mockRepo.On("SaveUser", mock.Anything, mock.MatchedBy(func(user *domain.User) bool {
 		return user.ID == userID && user.IsActive == true
 	})).Return(nil)
 
@@ -40,16 +38,14 @@ func TestUserChangeActive_SuccessActivate(t *testing.T) {
 	assert.True(t, updatedUser.IsActive)
 	assert.Equal(t, userID, updatedUser.ID)
 
-	mockUserRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserChangeActive_SuccessDeactivate(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 	currentUser := &domain.User{
@@ -59,8 +55,8 @@ func TestUserChangeActive_SuccessDeactivate(t *testing.T) {
 		IsActive: true,
 	}
 
-	mockUserRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
-	mockUserRepo.On("SaveUser", mock.Anything, mock.MatchedBy(func(user *domain.User) bool {
+	mockRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
+	mockRepo.On("SaveUser", mock.Anything, mock.MatchedBy(func(user *domain.User) bool {
 		return user.ID == userID && user.IsActive == false
 	})).Return(nil)
 
@@ -73,16 +69,14 @@ func TestUserChangeActive_SuccessDeactivate(t *testing.T) {
 	assert.False(t, updatedUser.IsActive)
 	assert.Equal(t, userID, updatedUser.ID)
 
-	mockUserRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserChangeActive_NoChangeSameValue(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 	currentUser := &domain.User{
@@ -92,7 +86,7 @@ func TestUserChangeActive_NoChangeSameValue(t *testing.T) {
 		IsActive: true,
 	}
 
-	mockUserRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
+	mockRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
 
 	// Act
 	updatedUser, err := service.UserChangeActive(context.Background(), userID, true)
@@ -103,21 +97,19 @@ func TestUserChangeActive_NoChangeSameValue(t *testing.T) {
 	assert.True(t, updatedUser.IsActive)
 	assert.Equal(t, userID, updatedUser.ID)
 
-	mockUserRepo.AssertNotCalled(t, "SaveUser")
-	mockUserRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "SaveUser")
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserChangeActive_UserNotFound(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "non-existent-user"
 
-	mockUserRepo.On("GetUserById", mock.Anything, userID).Return(nil, nil)
+	mockRepo.On("GetUserById", mock.Anything, userID).Return(nil, nil)
 
 	// Act
 	updatedUser, err := service.UserChangeActive(context.Background(), userID, true)
@@ -127,22 +119,20 @@ func TestUserChangeActive_UserNotFound(t *testing.T) {
 	assert.Nil(t, updatedUser)
 	assert.Equal(t, domain.ErrNotFound, err)
 
-	mockUserRepo.AssertExpectations(t)
-	mockUserRepo.AssertNotCalled(t, "SaveUser")
+	mockRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "SaveUser")
 }
 
 func TestUserChangeActive_GetUserError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 	expectedError := ErrQueryExecution
 
-	mockUserRepo.On("GetUserById", mock.Anything, userID).Return(nil, expectedError)
+	mockRepo.On("GetUserById", mock.Anything, userID).Return(nil, expectedError)
 
 	// Act
 	updatedUser, err := service.UserChangeActive(context.Background(), userID, true)
@@ -152,17 +142,15 @@ func TestUserChangeActive_GetUserError(t *testing.T) {
 	assert.Nil(t, updatedUser)
 	assert.Equal(t, expectedError, err)
 
-	mockUserRepo.AssertExpectations(t)
-	mockUserRepo.AssertNotCalled(t, "SaveUser")
+	mockRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "SaveUser")
 }
 
 func TestUserChangeActive_SaveUserError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 	currentUser := &domain.User{
@@ -173,8 +161,8 @@ func TestUserChangeActive_SaveUserError(t *testing.T) {
 	}
 	expectedError := ErrQueryExecution
 
-	mockUserRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
-	mockUserRepo.On("SaveUser", mock.Anything, mock.AnythingOfType("*domain.User")).Return(expectedError)
+	mockRepo.On("GetUserById", mock.Anything, userID).Return(currentUser, nil)
+	mockRepo.On("SaveUser", mock.Anything, mock.AnythingOfType("*domain.User")).Return(expectedError)
 
 	// Act
 	updatedUser, err := service.UserChangeActive(context.Background(), userID, true)
@@ -184,16 +172,14 @@ func TestUserChangeActive_SaveUserError(t *testing.T) {
 	assert.Nil(t, updatedUser)
 	assert.Equal(t, expectedError, err)
 
-	mockUserRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserGetReviews_Success(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "author123"
 	expectedPRs := []*domain.PullRequest{
@@ -213,7 +199,7 @@ func TestUserGetReviews_Success(t *testing.T) {
 		},
 	}
 
-	mockPRRepo.On("GetPRByAuthor", mock.Anything, userID).Return(expectedPRs, nil)
+	mockRepo.On("GetPRByAuthor", mock.Anything, userID).Return(expectedPRs, nil)
 
 	// Act
 	prs, err := service.UserGetReviews(context.Background(), userID)
@@ -224,20 +210,18 @@ func TestUserGetReviews_Success(t *testing.T) {
 	assert.Len(t, prs, 2)
 	assert.Equal(t, expectedPRs, prs)
 
-	mockPRRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserGetReviews_EmptyList(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user-with-no-prs"
 
-	mockPRRepo.On("GetPRByAuthor", mock.Anything, userID).Return([]*domain.PullRequest{}, nil)
+	mockRepo.On("GetPRByAuthor", mock.Anything, userID).Return([]*domain.PullRequest{}, nil)
 
 	// Act
 	prs, err := service.UserGetReviews(context.Background(), userID)
@@ -247,21 +231,19 @@ func TestUserGetReviews_EmptyList(t *testing.T) {
 	assert.NotNil(t, prs)
 	assert.Empty(t, prs)
 
-	mockPRRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserGetReviews_RepositoryError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 	expectedError := ErrQueryExecution
 
-	mockPRRepo.On("GetPRByAuthor", mock.Anything, userID).Return(nil, expectedError)
+	mockRepo.On("GetPRByAuthor", mock.Anything, userID).Return(nil, expectedError)
 
 	// Act
 	prs, err := service.UserGetReviews(context.Background(), userID)
@@ -271,20 +253,18 @@ func TestUserGetReviews_RepositoryError(t *testing.T) {
 	assert.Nil(t, prs)
 	assert.Equal(t, expectedError, err)
 
-	mockPRRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestUserGetReviews_NilResult(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	userID := "user123"
 
-	mockPRRepo.On("GetPRByAuthor", mock.Anything, userID).Return(nil, nil)
+	mockRepo.On("GetPRByAuthor", mock.Anything, userID).Return(nil, nil)
 
 	// Act
 	prs, err := service.UserGetReviews(context.Background(), userID)
@@ -293,5 +273,5 @@ func TestUserGetReviews_NilResult(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, prs)
 
-	mockPRRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }

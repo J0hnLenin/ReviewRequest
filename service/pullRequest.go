@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) PRCreate(ctx context.Context, prID string, title string, authorID string) (*domain.PullRequest, error) {
-	pr, err := s.prRepo.GetPRById(ctx, prID)
+	pr, err := s.repo.GetPRById(ctx, prID)
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +16,7 @@ func (s *Service) PRCreate(ctx context.Context, prID string, title string, autho
 		return nil, domain.ErrPRExists
 	}
 
-	team, err := s.teamRepo.GetTeamByUser(ctx, authorID)
+	team, err := s.repo.GetTeamByUser(ctx, authorID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (s *Service) PRCreate(ctx context.Context, prID string, title string, autho
 		MergedAt: nil,
 	}
 	fillReviewers(pr, team)
-	err = s.prRepo.SavePR(ctx, pr)
+	err = s.repo.SavePR(ctx, pr)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (s *Service) PRCreate(ctx context.Context, prID string, title string, autho
 }
 
 func (s *Service) PRMerge(ctx context.Context, id string) (*domain.PullRequest, error) {
-	pr, err := s.prRepo.GetPRById(ctx, id)
+	pr, err := s.repo.GetPRById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *Service) PRMerge(ctx context.Context, id string) (*domain.PullRequest, 
 	pr.Status = domain.Merged
 	pr.MergedAt = &now
 	
-	err = s.prRepo.SavePR(ctx, pr)
+	err = s.repo.SavePR(ctx, pr)
 	if err != nil {
 		return nil, err
 	}
@@ -64,14 +64,14 @@ func (s *Service) PRMerge(ctx context.Context, id string) (*domain.PullRequest, 
 }
 
 func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string) (*domain.PullRequest, string, error) {
-	pr, team, err := s.prRepo.GetPRAndTeam(ctx, prID)
+	pr, team, err := s.repo.GetPRAndTeam(ctx, prID)
 	if err != nil {
 		return nil, "", err
 	}
 	if pr == nil || team == nil {
 		return nil, "", domain.ErrNotFound
 	}
-	reviewer, err := s.userRepo.GetUserById(ctx, reviewerID)
+	reviewer, err := s.repo.GetUserById(ctx, reviewerID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -92,7 +92,7 @@ func (s *Service) PRreassign(ctx context.Context, prID string, reviewerID string
 	if err != nil {
 		return nil, "", err
 	}
-	err = s.prRepo.SavePR(ctx, pr)
+	err = s.repo.SavePR(ctx, pr)
 	if err != nil {
 		return nil, "", err
 	}

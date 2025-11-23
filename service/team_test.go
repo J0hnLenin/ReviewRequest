@@ -12,11 +12,9 @@ import (
 
 func TestTeamSave_Success(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "testers"
 	team := &domain.Team{
 		Name: teamName,
@@ -26,24 +24,22 @@ func TestTeamSave_Success(t *testing.T) {
 		},
 	}
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, nil)
-	mockTeamRepo.On("SaveTeam", mock.Anything, team).Return(nil)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, nil)
+	mockRepo.On("SaveTeam", mock.Anything, team).Return(nil)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
 
 	// Assert
 	assert.NoError(t, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamSave_TeamExists(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "existing-team"
 	team := &domain.Team{
 		Name: teamName,
@@ -54,7 +50,7 @@ func TestTeamSave_TeamExists(t *testing.T) {
 
 	existingTeam := &domain.Team{Name:teamName}
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(existingTeam, nil)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(existingTeam, nil)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
@@ -62,16 +58,14 @@ func TestTeamSave_TeamExists(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, domain.ErrTeamExists, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamGetByName_Success(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "teamName"
 	expectedTeam := &domain.Team{
 		Name: teamName,
@@ -80,7 +74,7 @@ func TestTeamGetByName_Success(t *testing.T) {
 		},
 	}
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(expectedTeam, nil)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(expectedTeam, nil)
 
 	// Act
 	team, err := service.TeamGetByName(context.Background(), teamName)
@@ -88,18 +82,16 @@ func TestTeamGetByName_Success(t *testing.T) {
 	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTeam, team)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamGetByName_NotFound(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, "non-existent").Return(nil, nil)
+	mockRepo.On("GetTeamByName", mock.Anything, "non-existent").Return(nil, nil)
 
 	// Act
 	team, err := service.TeamGetByName(context.Background(), "non-existent")
@@ -108,16 +100,14 @@ func TestTeamGetByName_NotFound(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, team)
 	assert.Equal(t, domain.ErrNotFound, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamSave_GetTeamByNameError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "team team"
 	team := &domain.Team{
 		Name: teamName,
@@ -127,7 +117,7 @@ func TestTeamSave_GetTeamByNameError(t *testing.T) {
 	}
 	expectedError := ErrQueryExecution
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, expectedError)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, expectedError)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
@@ -135,17 +125,15 @@ func TestTeamSave_GetTeamByNameError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, expectedError, err)
-	mockTeamRepo.AssertNotCalled(t, "SaveTeam")
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "SaveTeam")
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamSave_SaveTeamError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "test team"
 	team := &domain.Team{
 		Name: teamName,
@@ -156,8 +144,8 @@ func TestTeamSave_SaveTeamError(t *testing.T) {
 	}
 	expectedError := ErrQueryExecution
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, nil)
-	mockTeamRepo.On("SaveTeam", mock.Anything, team).Return(expectedError)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, nil)
+	mockRepo.On("SaveTeam", mock.Anything, team).Return(expectedError)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
@@ -165,16 +153,14 @@ func TestTeamSave_SaveTeamError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, expectedError, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamSave_ConnectionError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "test-team"
 	team := &domain.Team{
 		Name: teamName,
@@ -184,7 +170,7 @@ func TestTeamSave_ConnectionError(t *testing.T) {
 	}
 	connectionError := ErrConnection
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, connectionError)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, connectionError)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
@@ -192,22 +178,20 @@ func TestTeamSave_ConnectionError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, connectionError, err)
-	mockTeamRepo.AssertNotCalled(t, "SaveTeam")
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertNotCalled(t, "SaveTeam")
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamGetByName_GetTeamByNameError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	teamName := "test-team"
 	expectedError := ErrQueryExecution
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, expectedError)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, expectedError)
 
 	// Act
 	team, err := service.TeamGetByName(context.Background(), teamName)
@@ -216,21 +200,19 @@ func TestTeamGetByName_GetTeamByNameError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, team)
 	assert.Equal(t, expectedError, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamGetByName_ConnectionError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	teamName := "test-team"
 	connectionError := ErrConnection
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, connectionError)
+	mockRepo.On("GetTeamByName", mock.Anything, teamName).Return(nil, connectionError)
 
 	// Act
 	team, err := service.TeamGetByName(context.Background(), teamName)
@@ -239,42 +221,38 @@ func TestTeamGetByName_ConnectionError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, team)
 	assert.Equal(t, connectionError, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamSave_EmptyTeamName(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
 	team := &domain.Team{
 		Name:    "",
 		Members: []*domain.User{},
 	}
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, "").Return(nil, nil)
-	mockTeamRepo.On("SaveTeam", mock.Anything, mock.Anything).Return(nil, nil)
+	mockRepo.On("GetTeamByName", mock.Anything, "").Return(nil, nil)
+	mockRepo.On("SaveTeam", mock.Anything, mock.Anything).Return(nil, nil)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
 
 	// Assert
 	assert.NoError(t, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamGetByName_EmptyTeamName(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, "").Return(nil, nil)
+	mockRepo.On("GetTeamByName", mock.Anything, "").Return(nil, nil)
 
 	// Act
 	team, err := service.TeamGetByName(context.Background(), "")
@@ -283,16 +261,14 @@ func TestTeamGetByName_EmptyTeamName(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, team)
 	assert.Equal(t, domain.ErrNotFound, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestTeamSave_PartialSaveError(t *testing.T) {
 	// Arrange
-	mockTeamRepo := &mocks.MockRepository{}
-	mockUserRepo := &mocks.MockRepository{}
-	mockPRRepo := &mocks.MockRepository{}
+	mockRepo := &mocks.MockRepository{}
 
-	service := NewService(mockTeamRepo, mockUserRepo, mockPRRepo)
+	service := NewService(mockRepo)
 	teamName := "large-team"
 	team := &domain.Team{
 		Name: teamName,
@@ -304,8 +280,8 @@ func TestTeamSave_PartialSaveError(t *testing.T) {
 	}
 	expectedError := ErrQueryExecution
 
-	mockTeamRepo.On("GetTeamByName", mock.Anything, "large-team").Return(nil, nil)
-	mockTeamRepo.On("SaveTeam", mock.Anything, team).Return(expectedError)
+	mockRepo.On("GetTeamByName", mock.Anything, "large-team").Return(nil, nil)
+	mockRepo.On("SaveTeam", mock.Anything, team).Return(expectedError)
 
 	// Act
 	err := service.TeamSave(context.Background(), team)
@@ -313,5 +289,5 @@ func TestTeamSave_PartialSaveError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, expectedError, err)
-	mockTeamRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }

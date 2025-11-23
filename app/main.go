@@ -22,7 +22,7 @@ func main() {
     }
     defer repo.Close()
 
-    svc := service.NewService(repo, repo, repo)
+    svc := service.NewService(repo)
 
     h := handler.NewHandler(svc)
 
@@ -34,6 +34,7 @@ func main() {
     http.HandleFunc("/pullRequest/reassign", h.PRReassign)
     http.HandleFunc("/users/getReview", h.UserGetReviews)
     http.HandleFunc("/health", h.HealthCheck)
+    http.HandleFunc("/statistics", h.GetStatistics)
 
     log.Println("Server starting on :8080")
     log.Fatal(http.ListenAndServe(":8080", nil))
