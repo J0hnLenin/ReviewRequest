@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/J0hnLenin/ReviewRequest/badge.svg?branch=main)](https://coveralls.io/github/J0hnLenin/ReviewRequest)
 [![Lint](https://github.com/J0hnLenin/ReviewRequest/actions/workflows/lint.yml/badge.svg)](https://github.com/J0hnLenin/ReviewRequest/actions/workflows/lint.yml)  
 
-![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?style=for-the-badge&logo=go)
+![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?style=for-the-badge&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
