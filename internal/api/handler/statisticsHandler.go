@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -18,5 +19,8 @@ func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	err = json.NewEncoder(w).Encode(stats)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }

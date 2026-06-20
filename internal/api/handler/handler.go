@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/J0hnLenin/ReviewRequest/service"
@@ -18,7 +19,10 @@ func NewHandler(service *service.Service) *Handler {
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	err := json.NewEncoder(w).Encode(map[string]string{
 		"status": "healthy",
 	})
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }

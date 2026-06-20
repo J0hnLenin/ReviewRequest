@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -37,7 +38,10 @@ func (h *Handler) UserSetIsActive(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) UserGetReviews(w http.ResponseWriter, r *http.Request) {
@@ -59,10 +63,13 @@ func (h *Handler) UserGetReviews(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"user_id": userID,
+		"user_id":       userID,
 		"pull_requests": h.convertPRsToShortResponse(prs),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }

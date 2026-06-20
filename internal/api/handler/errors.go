@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/J0hnLenin/ReviewRequest/domain"
@@ -17,12 +18,15 @@ type ErrorResponse struct {
 func (h *Handler) writeError(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	
+
 	errorResp := ErrorResponse{}
 	errorResp.Error.Code = code
 	errorResp.Error.Message = message
-	
-	json.NewEncoder(w).Encode(errorResp)
+
+	err := json.NewEncoder(w).Encode(errorResp)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) handleError(w http.ResponseWriter, err error) {

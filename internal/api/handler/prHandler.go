@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -37,7 +38,11 @@ func (h *Handler) PRCreate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) PRMerge(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +60,7 @@ func (h *Handler) PRMerge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pr, err := h.service.PRMerge(r.Context(), req.PullRequestID); 
+	pr, err := h.service.PRMerge(r.Context(), req.PullRequestID)
 	if err != nil {
 		h.handleError(w, err)
 		return
@@ -66,7 +71,10 @@ func (h *Handler) PRMerge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) PRReassign(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +105,10 @@ func (h *Handler) PRReassign(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) convertPRToResponse(pr *domain.PullRequest) map[string]interface{} {
@@ -107,17 +118,17 @@ func (h *Handler) convertPRToResponse(pr *domain.PullRequest) map[string]interfa
 	}
 
 	response := map[string]interface{}{
-		"pull_request_id":   pr.ID,
-		"pull_request_name": pr.Title,
-		"author_id":         pr.AuthorID,
-		"status":            status,
+		"pull_request_id":    pr.ID,
+		"pull_request_name":  pr.Title,
+		"author_id":          pr.AuthorID,
+		"status":             status,
 		"assigned_reviewers": pr.ReviewersID,
 	}
 
 	if pr.Status == domain.Merged && pr.MergedAt != nil {
 		response["mergedAt"] = pr.MergedAt.Format(time.RFC3339)
 	}
-	
+
 	return response
 }
 

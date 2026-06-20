@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/J0hnLenin/ReviewRequest/domain"
 	"github.com/J0hnLenin/ReviewRequest/service"
@@ -99,7 +100,13 @@ func (r *PostgresRepository) SaveTeam(ctx context.Context, t *domain.Team) error
 	if err != nil {
 		return service.ErrQueryExecution
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				log.Printf("rollback error: %v", rbErr)
+			}
+		}
+	}()
 
 	query := `INSERT INTO teams (team_name) VALUES ($1) ON CONFLICT (team_name) DO NOTHING`
 	_, err = tx.ExecContext(ctx, query, t.Name)
@@ -117,23 +124,29 @@ func (r *PostgresRepository) SaveTeam(ctx context.Context, t *domain.Team) error
 }
 
 func (r *PostgresRepository) ChangeTeamActive(ctx context.Context, name string, active bool) (*domain.Team, error) {
-    tx, err := r.db.BeginTx(ctx, nil)
-    if err != nil {
-        return nil, service.ErrQueryExecution
-    }
-    defer tx.Rollback()
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, service.ErrQueryExecution
+	}
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				log.Printf("rollback error: %v", rbErr)
+			}
+		}
+	}()
 
-    updateQuery := `
+	updateQuery := `
         UPDATE users 
         SET is_active = $1 
         WHERE team_name = $2`
 
-    _, err = tx.ExecContext(ctx, updateQuery, active, name)
-    if err != nil {
-        return nil, service.ErrQueryExecution
-    }
+	_, err = tx.ExecContext(ctx, updateQuery, active, name)
+	if err != nil {
+		return nil, service.ErrQueryExecution
+	}
 
-    teamQuery := `
+	teamQuery := `
         SELECT t.team_name, 
                COALESCE(array_agg(u.id ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_ids,
                COALESCE(array_agg(u.user_name ORDER BY u.id) FILTER (WHERE u.id IS NOT NULL), '{}') as member_names,
@@ -143,38 +156,40 @@ func (r *PostgresRepository) ChangeTeamActive(ctx context.Context, name string, 
         WHERE t.team_name = $1
         GROUP BY t.team_name`
 
-    var team domain.Team
-    var memberIDs, memberNames []string
-    var memberActive []bool
+	var team domain.Team
+	var memberIDs, memberNames []string
+	var memberActive []bool
 
-    err = tx.QueryRowContext(ctx, teamQuery, name).Scan(
-        &team.Name,
-        pq.Array(&memberIDs),
-        pq.Array(&memberNames),
-        pq.Array(&memberActive),
-    )
+	err = tx.QueryRowContext(ctx, teamQuery, name).Scan(
+		&team.Name,
+		pq.Array(&memberIDs),
+		pq.Array(&memberNames),
+		pq.Array(&memberActive),
+	)
 
-    if err == sql.ErrNoRows {
-        tx.Rollback()
-        return nil, nil
-    }
-    if err != nil {
-        return nil, service.ErrQueryExecution
-    }
+	if err == sql.ErrNoRows {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			log.Printf("rollback error: %v", rbErr)
+		}
+		return nil, nil
+	}
+	if err != nil {
+		return nil, service.ErrQueryExecution
+	}
 
-    team.Members = make([]*domain.User, len(memberIDs))
-    for i := range memberIDs {
-        team.Members[i] = &domain.User{
-            ID:       memberIDs[i],
-            Name:     memberNames[i],
-            TeamName: team.Name,
-            IsActive: memberActive[i],
-        }
-    }
+	team.Members = make([]*domain.User, len(memberIDs))
+	for i := range memberIDs {
+		team.Members[i] = &domain.User{
+			ID:       memberIDs[i],
+			Name:     memberNames[i],
+			TeamName: team.Name,
+			IsActive: memberActive[i],
+		}
+	}
 
-    if err := tx.Commit(); err != nil {
-        return nil, service.ErrQueryExecution
-    }
+	if err := tx.Commit(); err != nil {
+		return nil, service.ErrQueryExecution
+	}
 
-    return &team, nil
+	return &team, nil
 }

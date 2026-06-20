@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/J0hnLenin/ReviewRequest/domain"
@@ -55,7 +56,10 @@ func (h *Handler) TeamAdd(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) TeamGet(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +86,10 @@ func (h *Handler) TeamGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
 
 func (h *Handler) convertMembersToResponse(members []*domain.User) []map[string]interface{} {
@@ -104,8 +111,8 @@ func (h *Handler) TeamSetIsActive(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		TeamNameID   string `json:"team_name"`
-		IsActive bool   `json:"is_active"`
+		TeamNameID string `json:"team_name"`
+		IsActive   bool   `json:"is_active"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -125,5 +132,8 @@ func (h *Handler) TeamSetIsActive(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Printf("response encode error: %v", err)
+	}
 }
